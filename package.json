@@ -1,0 +1,21 @@
+{
+  "name": "@saltcorn/material-design",
+  "version": "0.1.0",
+  "description": "Material Design theme based on mdbootstrap",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {
+    "@saltcorn/markup": "^0.2.3",
+    "@saltcorn/data": "^0.2.3"
+  },
+  "author": "Tom Nielsen",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^25.1.0"
+  },
+  "jest": {
+    "testEnvironment": "node"
+  }
+}

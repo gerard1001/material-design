@@ -150,6 +150,9 @@ const wrapIt = (config, bodyAttr, headers, title, body) => `<!doctype html>
     table.table a {
       color:#007bff;
     }
+    body {
+      background-color: ${config.backgroundColor || "white"};
+    }
     </style>
   </body>
 </html>`;
@@ -308,6 +311,13 @@ const configuration_workflow = () =>
                 name: "fixedTop",
                 label: "Navbar Fixed Top",
                 type: "Bool",
+                required: true,
+              },
+              {
+                name: "backgroundColor",
+                label: "Background Color",
+                type: "Color",
+                default: "#ffffff",
                 required: true,
               },
             ],

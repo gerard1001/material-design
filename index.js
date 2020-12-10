@@ -1,6 +1,7 @@
 const {
   div,
   text,
+  a,
   p,
   footer,
   section,
@@ -266,7 +267,7 @@ const renderAuthLinks = (authLinks) => {
   const meth_links = (authLinks.methods || [])
     .map(({ url, icon, label }) =>
       a(
-        { href: url, class: "btn btn-secondary btn-user btn-block" },
+        { href: url, class: "btn btn-secondary btn-user btn-block mb-1" },
         icon || "",
         `&nbsp;Login with ${label}`
       )

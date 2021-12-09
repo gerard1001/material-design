@@ -172,8 +172,10 @@ const layout = (config) => ({
       title,
       `
     <div id="wrapper">
-      ${navbar(brand, menu, currentUrl, config)}
-      ${renderBody(title, body, alerts, config, role)}
+      <div id="page-inner-content">
+        ${navbar(brand, menu, currentUrl, config)}
+        ${renderBody(title, body, alerts, config, role)}
+      </div>
     </div>
     `
     ),

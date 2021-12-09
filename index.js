@@ -85,22 +85,16 @@ const blockDispatch = (config) => ({
         background-repeat: no-repeat;`
                 : ""
             }`,
-          },
+        },
           div(
-            { class: ["container"] },
-            div(
-              { class: "row" },
-              div(
-                {
-                  class: `col-sm-12 ${
-                    segment.textStyle && segment.textStyle !== "h1"
-                      ? segment.textStyle
-                      : ""
-                  }`,
-                },
-                segment.textStyle && segment.textStyle === "h1" ? h1(s) : s
-              )
-            )
+            {
+              class: `${
+                segment.textStyle && segment.textStyle !== "h1"
+                  ? segment.textStyle
+                  : ""
+              }`,
+            },
+            segment.textStyle && segment.textStyle === "h1" ? h1(s) : s
           )
         ),
 });
@@ -172,10 +166,14 @@ const layout = (config) => ({
       title,
       `
     <div id="wrapper">
-      <div id="page-inner-content">
         ${navbar(brand, menu, currentUrl, config)}
-        ${renderBody(title, body, alerts, config, role)}
-      </div>
+        <div class="container">
+          <div class="row">
+            <div class="col-sm-12" id="page-inner-content">
+              ${renderBody(title, body, alerts, config, role)}
+            </div>
+          </div>
+        </div>
     </div>
     `
     ),

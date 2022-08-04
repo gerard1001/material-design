@@ -72,8 +72,8 @@ const blockDispatch = (config) => ({
             segment.invertColor && "bg-primary",
           ],
           style: `${segment.bgType === "Color"
-              ? `background-color: ${segment.bgColor};`
-              : ""
+            ? `background-color: ${segment.bgColor};`
+            : ""
             }
             ${segment.bgType === "Image" &&
               segment.bgFileId &&
@@ -87,8 +87,8 @@ const blockDispatch = (config) => ({
         div(
           {
             class: `${segment.textStyle && segment.textStyle !== "h1"
-                ? segment.textStyle
-                : ""
+              ? segment.textStyle
+              : ""
               }`,
           },
           segment.textStyle && segment.textStyle === "h1" ? h1(s) : s
@@ -117,10 +117,8 @@ const wrapIt = (config, bodyAttr, headers, title, body) => `<!doctype html>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css">
     <!-- Google Fonts -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap">
-    <!-- Bootstrap core CSS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/css/bootstrap.min.css" rel="stylesheet">
     <!-- Material Design Bootstrap -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.19.1/css/mdb.min.css" rel="stylesheet">
+    <link href="/plugins/public/material-design/css/mdb.min.css" rel="stylesheet">
 
     ${headersInHead(headers)}    
     <title>${text(title)}</title>
@@ -131,10 +129,8 @@ const wrapIt = (config, bodyAttr, headers, title, body) => `<!doctype html>
             integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" 
             crossorigin="anonymous"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.4/umd/popper.min.js"></script>
-    <!-- Bootstrap core JavaScript -->
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/js/bootstrap.min.js"></script>
     <!-- MDB core JavaScript -->
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.19.1/js/mdb.min.js"></script>
+    <script type="text/javascript" src="/plugins/public/material-design/js/mdb.min.js"></script>
 
     ${headersInBody(headers)}
     ${config.colorscheme === "navbar-light" ? navbarSolidOnScroll : ""}

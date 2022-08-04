@@ -52,7 +52,7 @@ const blockDispatch = (config) => ({
         cta
       ),
       backgroundImage &&
-        style(`.jumbotron {
+      style(`.jumbotron {
       background-image: url("${backgroundImage}");
       background-size: cover;
       min-height: 75vh !important;
@@ -63,40 +63,37 @@ const blockDispatch = (config) => ({
     ["hero", "footer"].includes(segment.type)
       ? s
       : section(
-          {
-            class: [
-              "page-section",
-              `pt-2`,
-              ix === 0 && config.fixedTop && "mt-5",
-              segment.class,
-              segment.invertColor && "bg-primary",
-            ],
-            style: `${
-              segment.bgType === "Color"
-                ? `background-color: ${segment.bgColor};`
-                : ""
+        {
+          class: [
+            "page-section",
+            `pt-2`,
+            ix === 0 && config.fixedTop && "mt-5",
+            segment.class,
+            segment.invertColor && "bg-primary",
+          ],
+          style: `${segment.bgType === "Color"
+              ? `background-color: ${segment.bgColor};`
+              : ""
             }
-            ${
-              segment.bgType === "Image" &&
+            ${segment.bgType === "Image" &&
               segment.bgFileId &&
               +segment.bgFileId
-                ? `background-image: url('/files/serve/${segment.bgFileId}');
+              ? `background-image: url('/files/serve/${segment.bgFileId}');
         background-size: ${segment.imageSize || "contain"};
         background-repeat: no-repeat;`
-                : ""
+              : ""
             }`,
         },
-          div(
-            {
-              class: `${
-                segment.textStyle && segment.textStyle !== "h1"
-                  ? segment.textStyle
-                  : ""
+        div(
+          {
+            class: `${segment.textStyle && segment.textStyle !== "h1"
+                ? segment.textStyle
+                : ""
               }`,
-            },
-            segment.textStyle && segment.textStyle === "h1" ? h1(s) : s
-          )
-        ),
+          },
+          segment.textStyle && segment.textStyle === "h1" ? h1(s) : s
+        )
+      ),
 });
 
 const renderBody = (title, body, alerts, config, role) =>
@@ -343,4 +340,5 @@ module.exports = {
   sc_plugin_api_version: 1,
   layout,
   configuration_workflow,
+  plugin_name: "material-design",
 };

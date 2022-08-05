@@ -176,7 +176,8 @@ const layout = (config) => ({
     </div>
     `
     ),
-  renderBody,
+  renderBody: ({ title, body, alerts, role }) =>
+    renderBody(title, body, alerts, config, role),
   authWrap: ({
     title,
     alerts, //TODO

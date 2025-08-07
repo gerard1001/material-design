@@ -26,10 +26,9 @@ const {
 } = require("@saltcorn/markup/layout_utils");
 const { features } = require("@saltcorn/data/db/state");
 
-const verstring =
-  features?.version_plugin_serve_path
-    ? "@" + require("./package.json").version
-    : ""
+const verstring = features?.version_plugin_serve_path
+  ? "@" + require("./package.json").version
+  : "";
 
 const blockDispatch = (config) => ({
   pageHeader: ({ title, blurb }) =>
@@ -58,7 +57,7 @@ const blockDispatch = (config) => ({
         cta
       ),
       backgroundImage &&
-      style(`.jumbotron {
+        style(`.jumbotron {
       background-image: url("${backgroundImage}");
       background-size: cover;
       min-height: 75vh !important;
@@ -69,37 +68,40 @@ const blockDispatch = (config) => ({
     ["hero", "footer"].includes(segment.type)
       ? s
       : section(
-        {
-          class: [
-            "page-section",
-            `pt-2`,
-            ix === 0 && config.fixedTop && "mt-5",
-            segment.class,
-            segment.invertColor && "bg-primary",
-          ],
-          style: `${segment.bgType === "Color"
-            ? `background-color: ${segment.bgColor};`
-            : ""
+          {
+            class: [
+              "page-section",
+              `pt-2`,
+              ix === 0 && config.fixedTop && "mt-5",
+              segment.class,
+              segment.invertColor && "bg-primary",
+            ],
+            style: `${
+              segment.bgType === "Color"
+                ? `background-color: ${segment.bgColor};`
+                : ""
             }
-            ${segment.bgType === "Image" &&
+            ${
+              segment.bgType === "Image" &&
               segment.bgFileId &&
               +segment.bgFileId
-              ? `background-image: url('/files/serve/${segment.bgFileId}');
+                ? `background-image: url('/files/serve/${segment.bgFileId}');
         background-size: ${segment.imageSize || "contain"};
         background-repeat: no-repeat;`
-              : ""
+                : ""
             }`,
-        },
-        div(
-          {
-            class: `${segment.textStyle && segment.textStyle !== "h1"
-              ? segment.textStyle
-              : ""
-              }`,
           },
-          segment.textStyle && segment.textStyle === "h1" ? h1(s) : s
-        )
-      ),
+          div(
+            {
+              class: `${
+                segment.textStyle && segment.textStyle !== "h1"
+                  ? segment.textStyle
+                  : ""
+              }`,
+            },
+            segment.textStyle && segment.textStyle === "h1" ? h1(s) : s
+          )
+        ),
 });
 
 const renderBody = (title, body, alerts, config, role) =>
@@ -114,7 +116,7 @@ const renderBody = (title, body, alerts, config, role) =>
   });
 
 const wrapIt = (config, bodyAttr, headers, title, body) => `<!doctype html>
-<html lang="en">
+<html lang="en" data-mdb-theme="${config?.mode || "light"}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -124,9 +126,10 @@ const wrapIt = (config, bodyAttr, headers, title, body) => `<!doctype html>
     <!-- Google Fonts -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap">
     <!-- Material Design Bootstrap -->
-    <link href="/plugins/public/material-design${verstring}/css/mdb.min.css" rel="stylesheet">
+    <!-- Temporary use of cdn -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/9.1.0/mdb.min.css" rel="stylesheet">
 
-    ${headersInHead(headers)}    
+    ${headersInHead(headers)}
     <title>${text(title)}</title>
   </head>
   <body ${bodyAttr}>
@@ -134,7 +137,7 @@ const wrapIt = (config, bodyAttr, headers, title, body) => `<!doctype html>
     <script src="https://code.jquery.com/jquery-3.4.1.min.js" 
             integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" 
             crossorigin="anonymous"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.4/umd/popper.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.8/umd/popper.min.js"></script>
     <!-- MDB core JavaScript -->
     <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/mdb.min.js"></script>
 
@@ -144,9 +147,9 @@ const wrapIt = (config, bodyAttr, headers, title, body) => `<!doctype html>
     table.table a {
       color:#007bff;
     }
-    body {
+    /* body {
       background-color: ${config.backgroundColor || "white"};
-    }
+    } */
     </style>
   </body>
 </html>`;
@@ -221,7 +224,7 @@ body {
   justify-content: center;
   padding-top: 40px;
   padding-bottom: 40px;
-  background-color: #f5f5f5;
+  /* background-color: #f5f5f5; */
 }
 
 .form-signin {
@@ -316,6 +319,11 @@ const configuration_workflow = () =>
                     { name: "navbar-light bg-light", label: "Light" },
                     { name: "navbar-light bg-white", label: "White" },
                     { name: "navbar-light", label: "Transparent Light" },
+                    {
+                      name: "navbar-scrolled bg-light",
+                      label: "Scrolled Light",
+                    },
+                    { name: "navbar-scrolled bg-dark", label: "Scrolled Dark" },
                   ],
                 },
               },
@@ -324,6 +332,19 @@ const configuration_workflow = () =>
                 label: "Navbar Fixed Top",
                 type: "Bool",
                 required: true,
+              },
+              {
+                name: "mode",
+                label: "Mode",
+                type: "String",
+                required: true,
+                default: "light",
+                attributes: {
+                  options: [
+                    { name: "light", label: "Light" },
+                    { name: "dark", label: "Dark" },
+                  ],
+                },
               },
               {
                 name: "backgroundColor",

@@ -116,7 +116,7 @@ const renderBody = (title, body, alerts, config, role) =>
   });
 
 const wrapIt = (config, bodyAttr, headers, title, body) => `<!doctype html>
-<html lang="en" data-mdb-theme="${config?.mode || "light"}">
+<html lang="en" data-bs-theme="${config?.mode || "light"}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -126,8 +126,7 @@ const wrapIt = (config, bodyAttr, headers, title, body) => `<!doctype html>
     <!-- Google Fonts -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap">
     <!-- Material Design Bootstrap -->
-    <!-- Temporary use of cdn -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/9.1.0/mdb.min.css" rel="stylesheet">
+    <link href="/plugins/public/material-design${verstring}/css/mdb.min.css" rel="stylesheet">
 
     ${headersInHead(headers)}
     <title>${text(title)}</title>
@@ -147,9 +146,9 @@ const wrapIt = (config, bodyAttr, headers, title, body) => `<!doctype html>
     table.table a {
       color:#007bff;
     }
-    /* body {
-      background-color: ${config.backgroundColor || "white"};
-    } */
+    .dropdown-menu.dropdown-menu-end {
+      max-width: fit-content;
+    }
     </style>
   </body>
 </html>`;
@@ -320,8 +319,8 @@ const configuration_workflow = () =>
                     { name: "navbar-light bg-white", label: "White" },
                     { name: "navbar-light", label: "Transparent Light" },
                     {
-                      name: "navbar-scrolled bg-light",
-                      label: "Scrolled Light",
+                      name: "navbar-scrolling bg-light",
+                      label: "Scrolling Light",
                     },
                     { name: "navbar-scrolled bg-dark", label: "Scrolled Dark" },
                   ],
@@ -335,7 +334,7 @@ const configuration_workflow = () =>
               },
               {
                 name: "mode",
-                label: "Mode",
+                label: "Color Mode",
                 type: "String",
                 required: true,
                 default: "light",
@@ -346,13 +345,13 @@ const configuration_workflow = () =>
                   ],
                 },
               },
-              {
-                name: "backgroundColor",
-                label: "Background Color",
-                type: "Color",
-                default: "#ffffff",
-                required: true,
-              },
+              // {
+              //   name: "backgroundColor",
+              //   label: "Background Color",
+              //   type: "Color",
+              //   default: "#ffffff",
+              //   required: true,
+              // },
             ],
           });
         },

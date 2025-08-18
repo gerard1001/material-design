@@ -5,8 +5,54 @@
   justify-content: start;
   align-items: start;
 }
+
 .sidenav-zIndex {
   z-index: 1035;
+}
+
+.nav-link {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.sidenav .nav .nav-link {
+  --mdb-nav-link-color: var(--mdb-secondary-text-emphasis);
+  font-size: 0.89rem;
+}
+
+.sidenav .nav-link:hover {
+  background-color: var(--mdb-highlight-bg-color);
+}
+
+.sidenav .nav-link.active {
+  background-color: var(--mdb-primary-bg-subtle);
+}
+
+.sidenav .nav .nav .nav-link {
+  --mdb-nav-link-color: var(--mdb-secondary-text-emphasis);
+  font-size: 0.78rem;
+  padding-left: 2rem;
+  padding-top: 0.3rem;
+  padding-bottom: 0.3rem;
+}
+
+.sidenav .sidenav-collapse-icon {
+  transition: transform 0.3s ease;
+}
+
+.sidenav .nav-item:has(> .collapse.show) > .nav-link .sidenav-collapse-icon {
+  transform: rotate(180deg);
+}
+
+.sidenav-light .navbar-toggler-icon {
+  --mdb-navbar-toggler-icon-bg: unset;
+  background-image: var(--mdb-navbar-toggler-icon-bg);
+}
+
+.navbar-light .navbar-toggler-icon {
+  --mdb-navbar-toggler-icon-bg: unset;
+  background-image: var(--mdb-navbar-toggler-icon-bg);
 }
 
 body:has(.sidenav) {

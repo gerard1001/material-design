@@ -41,10 +41,25 @@ const verstring = features?.version_plugin_serve_path
   ? "@" + require("./package.json").version
   : "";
 
+// when the function from base is not yet available
+const _activeChecker = activeChecker
+  ? activeChecker
+  : (link, currentUrl) => new RegExp(`^${link}(\\/|\\?|#|$)`).test(currentUrl);
+
+const active = (currentUrl, item) =>
+  (item.link && _activeChecker(item.link, currentUrl)) ||
+  (item.altlinks && item.altlinks.some((l) => _activeChecker(l, currentUrl))) ||
+  (item.subitems &&
+    item.subitems.some(
+      (si) =>
+        (si.link && _activeChecker(si.link, currentUrl)) ||
+        (si.altlinks && si.altlinks.some((l) => _activeChecker(l, currentUrl)))
+    ));
+
 const horizontalLineItem = (classes = []) =>
   div(
     { class: ["w-100 flex-shrink-0", ...classes] },
-    hr({ class: ["hr hr-blurry"] })
+    hr({ class: ["hr my-1"] })
   );
 
 const horizontalSubItem = (currentUrl) => (item) =>
@@ -73,7 +88,7 @@ const verticalSubItem = (currentUrl) => (item) =>
       ? a(
           {
             class: [
-              "nav-link m-0 rounded-0",
+              "nav-link m-0 rounded-0 ripple",
               active(currentUrl, item) && "active",
             ],
             href: text(item.link),
@@ -88,29 +103,17 @@ const verticalSubItem = (currentUrl) => (item) =>
         )
       : span(
           {
-            class: ["nav-link m-0 rounded-0", is_active && "active"],
+            class: [
+              "nav-link m-0 rounded-0",
+              active(currentUrl, item) && "active",
+            ],
           },
           text(item.label)
         )
   );
 
-// when the function from base is not yet available
-const _activeChecker = activeChecker
-  ? activeChecker
-  : (link, currentUrl) => new RegExp(`^${link}(\\/|\\?|#|$)`).test(currentUrl);
-
-const active = (currentUrl, item) =>
-  (item.link && _activeChecker(item.link, currentUrl)) ||
-  (item.altlinks && item.altlinks.some((l) => _activeChecker(l, currentUrl))) ||
-  (item.subitems &&
-    item.subitems.some(
-      (si) =>
-        (si.link && _activeChecker(si.link, currentUrl)) ||
-        (si.altlinks && si.altlinks.some((l) => _activeChecker(l, currentUrl)))
-    ));
-
 const verticalSideBarItem =
-  (currentUrl, config, user, nitems, horiz) => (item, ix) => {
+  (currentUrl, config, user, nitems) => (item, ix) => {
     const is_active = active(currentUrl, item);
     if (
       item.isUser &&
@@ -210,11 +213,10 @@ const verticalSideBarItem =
           ? [
               a(
                 {
-                  class: ["nav-link m-0"],
+                  class: ["nav-link m-0 d-flex align-items-center ripple"],
                   href: "#collapse_item_" + ix,
                   role: "button",
-                  "data-mdb-collapse-init": true,
-                  "data-mdb-ripple-init": true,
+                  "data-bs-toggle": "collapse",
                   "aria-expanded": "false",
                   "aria-controls": "collapse_item_" + ix,
                 },
@@ -228,14 +230,19 @@ const verticalSideBarItem =
                       })
                     )
                   : "",
-                span({ class: "nav-link-title" }, text(item.label))
+                item.label,
+                span(
+                  { class: "ms-auto" },
+                  i({
+                    class: "sidenav-collapse-icon fas fa-chevron-down fa-sm",
+                  })
+                )
               ),
               div(
                 {
                   class: ["collapse", is_active && "show"],
                   id: "collapse_item_" + ix,
                 },
-                hr({ class: "hr w-100 m-0" }),
                 ul(
                   { class: "nav w-100 d-flex flex-column" },
                   item.subitems.map(verticalSubItem(currentUrl))
@@ -248,12 +255,11 @@ const verticalSideBarItem =
                   item.style && item.style.includes("btn")
                     ? "ms-2"
                     : "nav-link",
-                  "m-0",
+                  "m-0 ripple",
                   item.style || "",
                   is_active && "active",
                 ],
                 href: text(item.link),
-                "data-mdb-ripple-init": true,
                 ...(is_active && { "aria-current": "page" }),
               },
               item.icon && item.icon !== "empty" && item.icon !== "undefined"
@@ -271,21 +277,11 @@ const verticalSideBarItem =
     }
   };
 
-const sideBarSection = (currentUrl, config, user, horiz) => (section) =>
+const sideBarSection = (currentUrl, config, user) => (section) =>
   [
-    !horiz
-      ? section.items
-          .map(
-            verticalSideBarItem(
-              currentUrl,
-              config,
-              user,
-              section.items.length,
-              horiz
-            )
-          )
-          .join("")
-      : "",
+    section.items
+      .map(verticalSideBarItem(currentUrl, config, user, section.items.length))
+      .join(""),
   ];
 
 const splitPrimarySecondaryMenu = (menu) => {
@@ -449,6 +445,10 @@ const wrapIt = (config, bodyAttr, headers, title, body) => `<!doctype html>
     <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/popper.min.js"></script>
     <!-- MDB core JavaScript -->
     <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/mdb.min.js"></script>
+    <!-- Bind window.mdb to window.bootstrap for backward compatibility -->
+    <script>
+      window.bootstrap = window.mdb;
+    </script>
 
     ${headersInBody(headers)}
     ${config.colorscheme === "navbar-light" ? navbarSolidOnScroll : ""}
@@ -495,7 +495,7 @@ const vertical_sidebar_sections = (
     a(
       {
         href: "/",
-        class: "d-flex align-items-center text-decoration-none fs-4",
+        class: "d-flex p-3 align-items-center text-decoration-none fs-4",
       },
       brand.logo &&
         img({
@@ -510,14 +510,13 @@ const vertical_sidebar_sections = (
   horizontalLineItem() +
   ul(
     {
-      class:
-        "nav nav-pills m-0 row-gap-2 w-100 flex-column flex-nowrap overflow-y-auto",
+      class: "nav w-100 flex-column flex-nowrap overflow-y-auto",
     },
     [...primary].map(sideBarSection(currentUrl, config, user))
   ) +
   horizontalLineItem(["mt-auto"]) +
   ul(
-    { class: "nav nav-pills m-0 row-gap-2 w-100 flex-column flex-nowrap" },
+    { class: "nav w-100 flex-column flex-nowrap" },
     [...secondary].map(sideBarSection(currentUrl, config, user))
   );
 
@@ -531,8 +530,16 @@ const vertical_header_sections = (
 ) =>
   aside(
     {
-      class:
-        "sidenav sidenav-zIndex shadow position-fixed top-0 start-0 p-3 d-none d-lg-flex flex-column flex-shrink-0 bg-body-subtle border-end overflow-y-auto",
+      class: [
+        "sidenav sidenav-zIndex shadow position-fixed top-0 start-0 p-1 d-none d-lg-flex flex-column flex-shrink-0 bg-body-subtle border-end overflow-y-auto",
+        config?.colorscheme && config.colorscheme.toLowerCase(),
+      ],
+      ...(config?.colorscheme.includes("sidenav-dark") && {
+        "data-bs-theme": "dark",
+      }),
+      ...(config?.colorscheme.includes("sidenav-light") && {
+        "data-bs-theme": "light",
+      }),
     },
     vertical_sidebar_sections(
       brand,
@@ -547,8 +554,16 @@ const vertical_header_sections = (
     { class: ["offcanvas offcanvas-start"], tabindex: "-1", id: "sidebar" },
     aside(
       {
-        class:
-          "sidenav offcanvas-body p-3 d-flex d-lg-none flex-column flex-shrink-0 bg-body-subtle border-end overflow-y-auto",
+        class: [
+          "sidenav offcanvas-body p-1 d-flex d-lg-none flex-column flex-shrink-0 bg-body-subtle border-end overflow-y-auto",
+          config?.colorscheme && config.colorscheme.toLowerCase(),
+        ],
+        ...(config?.colorscheme.includes("sidenav-dark") && {
+          "data-bs-theme": "dark",
+        }),
+        ...(config?.colorscheme.includes("sidenav-light") && {
+          "data-bs-theme": "light",
+        }),
       },
       vertical_sidebar_sections(
         brand,
@@ -561,7 +576,18 @@ const vertical_header_sections = (
     )
   ) +
   header(
-    { class: "navbar navbar-expand-lg d-lg-none" },
+    {
+      class: [
+        "navbar navbar-expand-lg d-lg-none",
+        config?.colorscheme && config.colorscheme.toLowerCase(),
+      ],
+      ...(config?.colorscheme.includes("sidenav-dark") && {
+        "data-bs-theme": "dark",
+      }),
+      ...(config?.colorscheme.includes("sidenav-light") && {
+        "data-bs-theme": "light",
+      }),
+    },
     div(
       { class: "container-xl" },
       button(
@@ -741,12 +767,43 @@ const configuration_workflow = () =>
               },
               {
                 name: "colorscheme",
+                label: "Sidebar color scheme",
+                type: "String",
+                required: true,
+                default: "",
+                attributes: {
+                  options: [
+                    { name: "", label: "Default" },
+                    { name: "sidenav-dark bg-dark", label: "Dark" },
+                    { name: "sidenav-dark bg-primary", label: "Dark Primary" },
+                    {
+                      name: "sidenav-dark bg-secondary",
+                      label: "Dark Secondary",
+                    },
+                    { name: "sidenav-light bg-light", label: "Light" },
+                    { name: "sidenav-light bg-white", label: "White" },
+                    { name: "sidenav-light", label: "Transparent Light" },
+                    {
+                      name: "sidenav-light navbar-scrolling bg-light",
+                      label: "Scrolling Light",
+                    },
+                    {
+                      name: "sidenav-dark navbar-scrolled bg-dark",
+                      label: "Scrolled Dark",
+                    },
+                  ],
+                },
+                showIf: { layout_style: "Vertical" },
+              },
+              {
+                name: "colorscheme",
                 label: "Navbar color scheme",
                 type: "String",
                 required: true,
-                default: "navbar-light",
+                default: "",
                 attributes: {
                   options: [
+                    { name: "", label: "Default" },
                     { name: "navbar-dark bg-dark", label: "Dark" },
                     { name: "navbar-dark bg-primary", label: "Dark Primary" },
                     {
@@ -763,12 +820,14 @@ const configuration_workflow = () =>
                     { name: "navbar-scrolled bg-dark", label: "Scrolled Dark" },
                   ],
                 },
+                showIf: { layout_style: "Horizontal" },
               },
               {
                 name: "fixedTop",
                 label: "Navbar Fixed Top",
                 type: "Bool",
                 required: true,
+                showIf: { layout_style: "Horizontal" },
               },
               {
                 name: "mode",

@@ -1,44 +1,352 @@
 const {
+  ul,
+  li,
+  a,
+  span,
+  hr,
   div,
   text,
-  a,
-  p,
-  footer,
-  section,
-  style,
+  i,
+  h6,
+  h2,
+  h3,
   h1,
+  p,
+  header,
+  footer,
+  mkTag,
+  button,
+  nav,
+  img,
+  aside,
+  form,
+  input,
+  section,
 } = require("@saltcorn/markup/tags");
 const {
   navbar,
   navbarSolidOnScroll,
-} = require("@saltcorn/markup/layout_utils");
-const renderLayout = require("@saltcorn/markup/layout");
-const Field = require("@saltcorn/data/models/field");
-const Table = require("@saltcorn/data/models/table");
-const Form = require("@saltcorn/data/models/form");
-const View = require("@saltcorn/data/models/view");
-const Workflow = require("@saltcorn/data/models/workflow");
-const { renderForm, link } = require("@saltcorn/markup");
-const {
-  alert,
   headersInHead,
   headersInBody,
+  alert,
+  activeChecker,
 } = require("@saltcorn/markup/layout_utils");
+const renderLayout = require("@saltcorn/markup/layout");
+const Form = require("@saltcorn/data/models/form");
+const Workflow = require("@saltcorn/data/models/workflow");
+const { renderForm, link } = require("@saltcorn/markup");
 const { features } = require("@saltcorn/data/db/state");
 
 const verstring = features?.version_plugin_serve_path
   ? "@" + require("./package.json").version
   : "";
 
+const horizontalLineItem = (classes = []) =>
+  div(
+    { class: ["w-100 flex-shrink-0", ...classes] },
+    hr({ class: ["hr hr-blurry"] })
+  );
+
+const horizontalSubItem = (currentUrl) => (item) =>
+  li(
+    item.link
+      ? a(
+          {
+            class: ["dropdown-item", active(currentUrl, item) && "active"],
+            href: text(item.link),
+          },
+          item.icon && item.icon !== "empty" && item.icon !== "undefined"
+            ? i({
+                class: `me-1 fa-fw ${item.icon} object-fit-contain`,
+                style: "width: 16px; height: 16px;",
+              })
+            : "",
+          item.label
+        )
+      : span({ class: "dropdown-header" }, item.label)
+  );
+
+const verticalSubItem = (currentUrl) => (item) =>
+  li(
+    { class: ["nav-item"] },
+    item.link
+      ? a(
+          {
+            class: [
+              "nav-link m-0 rounded-0",
+              active(currentUrl, item) && "active",
+            ],
+            href: text(item.link),
+          },
+          item.icon && item.icon !== "empty" && item.icon !== "undefined"
+            ? i({
+                class: `me-2 fa-fw ${item.icon} object-fit-contain`,
+                style: "width: 16px; height: 16px;",
+              })
+            : "",
+          item.label
+        )
+      : span(
+          {
+            class: ["nav-link m-0 rounded-0", is_active && "active"],
+          },
+          text(item.label)
+        )
+  );
+
+// when the function from base is not yet available
+const _activeChecker = activeChecker
+  ? activeChecker
+  : (link, currentUrl) => new RegExp(`^${link}(\\/|\\?|#|$)`).test(currentUrl);
+
+const active = (currentUrl, item) =>
+  (item.link && _activeChecker(item.link, currentUrl)) ||
+  (item.altlinks && item.altlinks.some((l) => _activeChecker(l, currentUrl))) ||
+  (item.subitems &&
+    item.subitems.some(
+      (si) =>
+        (si.link && _activeChecker(si.link, currentUrl)) ||
+        (si.altlinks && si.altlinks.some((l) => _activeChecker(l, currentUrl)))
+    ));
+
+const verticalSideBarItem =
+  (currentUrl, config, user, nitems, horiz) => (item, ix) => {
+    const is_active = active(currentUrl, item);
+    if (
+      item.isUser &&
+      config?.avatar_file &&
+      user &&
+      user[config?.avatar_file]
+    ) {
+      return li(
+        {
+          class: ["nav-item dropdown", is_active && "active"],
+        },
+        a(
+          {
+            class: "nav-link m-0",
+            href: "#",
+            "data-bs-toggle": "dropdown",
+            role: "button",
+            "aria-expanded": "false",
+          },
+          span({
+            class:
+              "avatar avatar-sm fs-4 m-0 bg-body-secondary text-muted-fg border border-1",
+            style: `background-image: url(/files/resize/64/64/${
+              user?.[config.avatar_file]
+            })`,
+          })
+        ),
+        ul(
+          {
+            class: ["dropdown-menu", ix === nitems - 1 && "dropdown-menu-end"],
+          },
+          item.subitems.map(horizontalSubItem(currentUrl))
+        )
+      );
+    } else if (item.isUser && user?.email) {
+      return li(
+        {
+          class: ["nav-item dropdown", is_active && "active"],
+        },
+        a(
+          {
+            class: "nav-link m-0",
+            href: "#",
+            "data-bs-toggle": "dropdown",
+            role: "button",
+            "aria-expanded": "false",
+          },
+          div(
+            {
+              class: "fs-4 m-0 bg-body-secondary text-muted-fg border border-1",
+              style:
+                "border-radius: 50%; width: 40px; height:40px; display: flex;align-items: center; justify-content: center;",
+            },
+            user.email[0].toUpperCase()
+          )
+        ),
+        ul(
+          {
+            class: ["dropdown-menu", ix === nitems - 1 && "dropdown-menu-end"],
+          },
+          item.subitems.map(horizontalSubItem(currentUrl))
+        )
+      );
+    }
+    {
+      return li(
+        {
+          class: ["nav-item"],
+        },
+        item.type === "Separator"
+          ? horizontalLineItem()
+          : item.type === "Search"
+          ? form(
+              {
+                action: "/search",
+                class: "menusearch ms-2",
+                method: "get",
+                autocomplete: "off",
+                novalidate: "",
+              },
+              div(
+                { class: "input-icon" },
+                span(
+                  { class: "input-icon-addon" },
+                  i({ class: "fas fa-search" })
+                ),
+                input({
+                  type: "text",
+                  value: "",
+                  class: "form-control",
+                  placeholder: "Search…",
+                  "aria-label": "Search in website",
+                })
+              )
+            )
+          : item.subitems
+          ? [
+              a(
+                {
+                  class: ["nav-link m-0"],
+                  href: "#collapse_item_" + ix,
+                  role: "button",
+                  "data-mdb-collapse-init": true,
+                  "data-mdb-ripple-init": true,
+                  "aria-expanded": "false",
+                  "aria-controls": "collapse_item_" + ix,
+                },
+                //i({ class: "fas fa-fw fa-wrench" }),
+                item.icon && item.icon !== "empty" && item.icon !== "undefined"
+                  ? span(
+                      { class: "me-2" },
+                      i({
+                        class: `fa-fw ${item.icon} object-fit-contain`,
+                        style: "width: 16px; height: 16px;",
+                      })
+                    )
+                  : "",
+                span({ class: "nav-link-title" }, text(item.label))
+              ),
+              div(
+                {
+                  class: ["collapse", is_active && "show"],
+                  id: "collapse_item_" + ix,
+                },
+                hr({ class: "hr w-100 m-0" }),
+                ul(
+                  { class: "nav w-100 d-flex flex-column" },
+                  item.subitems.map(verticalSubItem(currentUrl))
+                )
+              ),
+            ]
+          : a(
+              {
+                class: [
+                  item.style && item.style.includes("btn")
+                    ? "ms-2"
+                    : "nav-link",
+                  "m-0",
+                  item.style || "",
+                  is_active && "active",
+                ],
+                href: text(item.link),
+                "data-mdb-ripple-init": true,
+                ...(is_active && { "aria-current": "page" }),
+              },
+              item.icon && item.icon !== "empty" && item.icon !== "undefined"
+                ? span(
+                    { class: "me-2" },
+                    i({
+                      class: `fa-fw ${item.icon} object-fit-contain`,
+                      styyle: "width: 16px; height: 16px;",
+                    })
+                  )
+                : "",
+              text(item.label)
+            )
+      );
+    }
+  };
+
+const sideBarSection = (currentUrl, config, user, horiz) => (section) =>
+  [
+    !horiz
+      ? section.items
+          .map(
+            verticalSideBarItem(
+              currentUrl,
+              config,
+              user,
+              section.items.length,
+              horiz
+            )
+          )
+          .join("")
+      : "",
+  ];
+
+const splitPrimarySecondaryMenu = (menu) => {
+  return {
+    primary: menu
+      .map((mi) => ({
+        ...mi,
+        items: mi.items.filter(
+          (item) => item.location !== "Secondary Menu" && mi.section !== "User"
+        ),
+      }))
+      .filter(({ items }) => items.length),
+    secondary: menu
+      .map((mi) => ({
+        ...mi,
+        items: mi.items.filter(
+          (item) => item.location === "Secondary Menu" || mi.section === "User"
+        ),
+      }))
+      .filter(({ items }) => items.length),
+  };
+};
+
+const showBrand = (brand, config) =>
+  a(
+    {
+      href: "/",
+      // class: "navbar-brand navbar-brand-autodark d-none-navbar-horizontal",
+      class: "navbar-brand navbar-brand-autodark d-none-navbar-horizontal",
+    },
+    brand.logo &&
+      img({
+        src: brand.logo,
+        alt: "Logo",
+        class: "navbar-brand-image mx-1",
+      }),
+    !config?.hide_site_name && brand.name
+  );
+
 const blockDispatch = (config) => ({
   pageHeader: ({ title, blurb }) =>
     div(
-      h1({ class: "h3 mb-0 mt-2 text-gray-800" }, title),
-      blurb && p({ class: "mb-0 text-gray-800" }, blurb)
+      h1(
+        {
+          class: `h3 mb-0 mt-2 text-${
+            config.mode === "dark" ? "light" : "gray-800"
+          }`,
+        },
+        title
+      ),
+      blurb &&
+        p(
+          {
+            class: `mb-0 text-${config.mode === "dark" ? "light" : "gray-800"}`,
+          },
+          blurb
+        )
     ),
   footer: ({ contents }) =>
     div(
-      { class: "container" },
+      { class: "container-xl" },
       footer(
         { id: "footer" },
         div({ class: "row" }, div({ class: "col-sm-12" }, contents))
@@ -51,17 +359,17 @@ const blockDispatch = (config) => ({
           "jumbotron text-center m-0 bg-info d-flex flex-column justify-content-center",
       },
       div(
-        { class: "container" },
+        { class: "container-xl" },
         h1({ class: "jumbotron-heading" }, caption),
         p({ class: "lead" }, blurb),
         cta
       ),
       backgroundImage &&
         style(`.jumbotron {
-      background-image: url("${backgroundImage}");
-      background-size: cover;
-      min-height: 75vh !important;
-    }`)
+        background-image: url("${backgroundImage}");
+        background-size: cover;
+        min-height: 75vh !important;
+      }`)
     ),
   noBackgroundAtTop: () => true,
   wrapTop: (segment, ix, s) =>
@@ -81,15 +389,15 @@ const blockDispatch = (config) => ({
                 ? `background-color: ${segment.bgColor};`
                 : ""
             }
-            ${
-              segment.bgType === "Image" &&
-              segment.bgFileId &&
-              +segment.bgFileId
-                ? `background-image: url('/files/serve/${segment.bgFileId}');
-        background-size: ${segment.imageSize || "contain"};
-        background-repeat: no-repeat;`
-                : ""
-            }`,
+              ${
+                segment.bgType === "Image" &&
+                segment.bgFileId &&
+                +segment.bgFileId
+                  ? `background-image: url('/files/serve/${segment.bgFileId}');
+          background-size: ${segment.imageSize || "contain"};
+          background-repeat: no-repeat;`
+                  : ""
+              }`,
           },
           div(
             {
@@ -116,7 +424,7 @@ const renderBody = (title, body, alerts, config, role) =>
   });
 
 const wrapIt = (config, bodyAttr, headers, title, body) => `<!doctype html>
-<html lang="en" data-bs-theme="${config?.mode || "light"}">
+<html lang="en" data-bs-theme="${config.mode === "auto" ? "" : config.mode}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -127,16 +435,18 @@ const wrapIt = (config, bodyAttr, headers, title, body) => `<!doctype html>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap">
     <!-- Material Design Bootstrap -->
     <link href="/plugins/public/material-design${verstring}/css/mdb.min.css" rel="stylesheet">
+    <!-- Plugin Custom Styles -->
+    <link href="/plugins/public/material-design${verstring}/css/sidenav.css" rel="stylesheet">
 
     ${headersInHead(headers)}
     <title>${text(title)}</title>
   </head>
-  <body ${bodyAttr}>
+  <body ${bodyAttr} class="${config.mode === "dark" ? "bg-dark" : ""}">
     ${body}
     <script src="https://code.jquery.com/jquery-3.4.1.min.js" 
             integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" 
             crossorigin="anonymous"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.8/umd/popper.min.js"></script>
+    <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/popper.min.js"></script>
     <!-- MDB core JavaScript -->
     <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/mdb.min.js"></script>
 
@@ -153,22 +463,150 @@ const wrapIt = (config, bodyAttr, headers, title, body) => `<!doctype html>
   </body>
 </html>`;
 
+const header_sections = (brand, sections, currentUrl, config, user, title) => {
+  if (!sections && !brand) return "";
+  const { primary, secondary } = splitPrimarySecondaryMenu(sections || []);
+
+  switch (config?.layout_style) {
+    case "Vertical":
+      return vertical_header_sections(
+        brand,
+        primary,
+        secondary,
+        currentUrl,
+        config,
+        user
+      );
+
+    default: //Horizontal
+      return navbar(brand, sections, currentUrl, config);
+  }
+};
+
+const vertical_sidebar_sections = (
+  brand,
+  primary,
+  secondary,
+  currentUrl,
+  config,
+  user
+) =>
+  (brand &&
+    a(
+      {
+        href: "/",
+        class: "d-flex align-items-center text-decoration-none fs-4",
+      },
+      brand.logo &&
+        img({
+          src: brand.logo,
+          alt: "Logo",
+          class: "me-2 object-fit-contain",
+          width: "40",
+          height: "32",
+        }),
+      (!config?.hide_site_name || !brand.logo) && brand.name
+    )) +
+  horizontalLineItem() +
+  ul(
+    {
+      class:
+        "nav nav-pills m-0 row-gap-2 w-100 flex-column flex-nowrap overflow-y-auto",
+    },
+    [...primary].map(sideBarSection(currentUrl, config, user))
+  ) +
+  horizontalLineItem(["mt-auto"]) +
+  ul(
+    { class: "nav nav-pills m-0 row-gap-2 w-100 flex-column flex-nowrap" },
+    [...secondary].map(sideBarSection(currentUrl, config, user))
+  );
+
+const vertical_header_sections = (
+  brand,
+  primary,
+  secondary,
+  currentUrl,
+  config,
+  user
+) =>
+  aside(
+    {
+      class:
+        "sidenav sidenav-zIndex shadow position-fixed top-0 start-0 p-3 d-none d-lg-flex flex-column flex-shrink-0 bg-body-subtle border-end overflow-y-auto",
+    },
+    vertical_sidebar_sections(
+      brand,
+      primary,
+      secondary,
+      currentUrl,
+      config,
+      user
+    )
+  ) +
+  div(
+    { class: ["offcanvas offcanvas-start"], tabindex: "-1", id: "sidebar" },
+    aside(
+      {
+        class:
+          "sidenav offcanvas-body p-3 d-flex d-lg-none flex-column flex-shrink-0 bg-body-subtle border-end overflow-y-auto",
+      },
+      vertical_sidebar_sections(
+        brand,
+        primary,
+        secondary,
+        currentUrl,
+        config,
+        user
+      )
+    )
+  ) +
+  header(
+    { class: "navbar navbar-expand-lg d-lg-none" },
+    div(
+      { class: "container-xl" },
+      button(
+        {
+          class: "navbar-toggler",
+          type: "button",
+          "data-bs-toggle": "offcanvas",
+          "data-bs-target": "#sidebar",
+        },
+        span({ class: "navbar-toggler-icon" })
+      ),
+      brand && showBrand(brand, config),
+      div(
+        { class: "navbar-nav flex-row order-lg-last" },
+        secondary.map(sideBarSection(currentUrl, config, user))
+      )
+    )
+  );
+
 const authBrand = (config, { name, logo }) =>
   logo
     ? `<img class="mb-4" src="${logo}" alt="Logo" width="72" height="72">`
     : "";
 
 const layout = (config) => ({
-  wrap: ({ title, menu, brand, alerts, currentUrl, body, headers, role }) =>
+  wrap: ({
+    title,
+    menu,
+    brand,
+    alerts,
+    currentUrl,
+    body,
+    headers,
+    role,
+    req,
+  }) =>
     wrapIt(
       config,
       'id="page-top"',
       headers,
       title,
       `
-    <div id="wrapper">
-        ${navbar(brand, menu, currentUrl, config)}
-        <div class="container">
+      <div id="wrapper">
+      ${header_sections(brand, menu, currentUrl, config, req?.user, title)}
+        <div class="container-xl">
           <div class="row">
             <div class="col-sm-12" id="page-inner-content">
               ${renderBody(title, body, alerts, config, role)}
@@ -342,16 +780,20 @@ const configuration_workflow = () =>
                   options: [
                     { name: "light", label: "Light" },
                     { name: "dark", label: "Dark" },
+                    { name: "auto", label: "Auto" },
                   ],
                 },
               },
-              // {
-              //   name: "backgroundColor",
-              //   label: "Background Color",
-              //   type: "Color",
-              //   default: "#ffffff",
-              //   required: true,
-              // },
+              {
+                name: "layout_style",
+                label: "Layout style",
+                type: "String",
+                required: true,
+                attributes: {
+                  inline: true,
+                  options: ["Horizontal", "Vertical"],
+                },
+              },
             ],
           });
         },

@@ -1,0 +1,23 @@
+.sidenav {
+  z-index: 1035;
+  width: 280px;
+  height: 100vh;
+  justify-content: start;
+  align-items: start;
+}
+.sidenav-zIndex {
+  z-index: 1035;
+}
+
+body:has(.sidenav) {
+  margin-left: 280px;
+}
+.offcanvas:has(.sidenav) {
+  --mdb-offcanvas-width: 280px;
+}
+
+@media screen and (max-width: 992px) {
+  body:has(.sidenav) {
+    margin-left: 0;
+  }
+}

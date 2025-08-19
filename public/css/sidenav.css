@@ -45,12 +45,10 @@
   transform: rotate(180deg);
 }
 
-.sidenav-light .navbar-toggler-icon {
-  --mdb-navbar-toggler-icon-bg: unset;
-  background-image: var(--mdb-navbar-toggler-icon-bg);
-}
-
-.navbar-light .navbar-toggler-icon {
+.navbar-light .navbar-toggler-icon,
+.sidenav-light .navbar-toggler-icon,
+.navbar-dark .navbar-toggler-icon,
+.sidenav-dark .navbar-toggler-icon {
   --mdb-navbar-toggler-icon-bg: unset;
   background-image: var(--mdb-navbar-toggler-icon-bg);
 }

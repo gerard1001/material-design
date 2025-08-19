@@ -453,9 +453,6 @@ const wrapIt = (config, bodyAttr, headers, title, body) => `<!doctype html>
     ${headersInBody(headers)}
     ${config.colorscheme === "navbar-light" ? navbarSolidOnScroll : ""}
     <style>
-    table.table a {
-      color:#007bff;
-    }
     .dropdown-menu.dropdown-menu-end {
       max-width: fit-content;
     }

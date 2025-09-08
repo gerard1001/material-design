@@ -419,7 +419,119 @@ const renderBody = (title, body, alerts, config, role) =>
     alerts,
   });
 
-const wrapIt = (config, bodyAttr, headers, title, body) => `<!doctype html>
+const wrapIt = (config, bodyAttr, headers, title, body) => {
+  const primary = config?.primary_color || "#3b71ca";
+  const secondary = config?.secondary_color || "#9fa6b2";
+  const hexToRgb = (hex) => {
+    let cleanHex = hex.startsWith("#") ? hex.slice(1) : hex;
+    if (cleanHex.length === 3) {
+      cleanHex = cleanHex
+        .split("")
+        .map((char) => char + char)
+        .join("");
+    }
+    if (cleanHex.length !== 6) {
+      throw new Error("Invalid hex color format. Expected 3 or 6 digits.");
+    }
+    const r = parseInt(cleanHex.substring(0, 2), 16);
+    const g = parseInt(cleanHex.substring(2, 4), 16);
+    const b = parseInt(cleanHex.substring(4, 6), 16);
+
+    return `${r}, ${g}, ${b}`;
+  };
+  const primary_rgb = hexToRgb(primary);
+  const secondary_rgb = hexToRgb(secondary);
+  const adjustColor = (hex, { h = 0, s = 0, l = 0 }) => {
+    let cleanHex = hex.startsWith("#") ? hex.slice(1) : hex;
+    if (cleanHex.length === 3) {
+      cleanHex = cleanHex
+        .split("")
+        .map((c) => c + c)
+        .join("");
+    }
+
+    const num = parseInt(cleanHex, 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+
+    // RGB -> HSL
+    const rNorm = r / 255,
+      gNorm = g / 255,
+      bNorm = b / 255;
+    const max = Math.max(rNorm, gNorm, bNorm);
+    const min = Math.min(rNorm, gNorm, bNorm);
+    let hVal,
+      sVal,
+      lVal = (max + min) / 2;
+
+    if (max === min) {
+      hVal = sVal = 0;
+    } else {
+      const d = max - min;
+      sVal = lVal > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case rNorm:
+          hVal = (gNorm - bNorm) / d + (gNorm < bNorm ? 6 : 0);
+          break;
+        case gNorm:
+          hVal = (bNorm - rNorm) / d + 2;
+          break;
+        case bNorm:
+          hVal = (rNorm - gNorm) / d + 4;
+          break;
+      }
+      hVal /= 6;
+    }
+
+    // Adjustments
+    hVal = ((hVal * 360 + h) % 360) / 360;
+    sVal = Math.min(1, Math.max(0, sVal + s / 100));
+    lVal = Math.min(1, Math.max(0, lVal + l / 100));
+
+    // HSL -> RGB
+    const hue2rgb = (p, q, t) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1 / 6) return p + (q - p) * 6 * t;
+      if (t < 1 / 2) return q;
+      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+      return p;
+    };
+
+    let rOut, gOut, bOut;
+    if (sVal === 0) {
+      rOut = gOut = bOut = lVal;
+    } else {
+      const q = lVal < 0.5 ? lVal * (1 + sVal) : lVal + sVal - lVal * sVal;
+      const p = 2 * lVal - q;
+      rOut = hue2rgb(p, q, hVal + 1 / 3);
+      gOut = hue2rgb(p, q, hVal);
+      bOut = hue2rgb(p, q, hVal - 1 / 3);
+    }
+
+    return (
+      "#" +
+      [rOut, gOut, bOut]
+        .map((x) =>
+          Math.round(x * 255)
+            .toString(16)
+            .padStart(2, "0")
+        )
+        .join("")
+    );
+  };
+
+  const link_cover_color = adjustColor(primary, { l: -5 });
+  const mdb_btn_color = adjustColor(primary, { l: +15 });
+  const mdb_btn_outline_focus_border_color = adjustColor(primary, { l: +25 });
+  const mdb_btn_outline_border_color = adjustColor(primary, { l: +30 });
+  const mdb_btn_hover_color = adjustColor(primary, { l: +40 });
+  const mdb_btn_hover_bg = adjustColor(primary, { l: -40 });
+  const mdb_btn_color_hue = adjustColor(primary, { h: -10, l: +10 });
+  const mdb_btn_color_secondary = adjustColor(primary, { l: -16 });
+
+  return `<!doctype html>
 <html lang="en" data-bs-theme="${config.mode === "auto" ? "" : config.mode}">
   <head>
     <meta charset="utf-8" />
@@ -453,12 +565,138 @@ const wrapIt = (config, bodyAttr, headers, title, body) => `<!doctype html>
     ${headersInBody(headers)}
     ${config.colorscheme === "navbar-light" ? navbarSolidOnScroll : ""}
     <style>
+    :root,
+    [data-bs-theme="light"] {
+      --mdb-primary: ${primary};
+      --mdb-secondary: ${secondary};
+      --mdb-primary-rgb: ${primary_rgb};
+      --mdb-secondary-rgb: ${secondary_rgb};
+      --mdb-link-hover-color: ${link_cover_color};
+      --mdb-link-color-rgb: ${primary_rgb};
+      --mdb-link-hover-color-rgb: ${link_cover_color};
+      --mdb-primary-text-emphasis: ${adjustColor(primary, { l: -10 })};
+      --mdb-primary-bg-subtle: ${adjustColor(primary, { l: +25 })};
+      /* --mdb-link-color: ${adjustColor(primary, { l: +50 })}; */
+    }
+    [data-bs-theme="dark"] {
+      --mdb-primary: ${primary};
+      --mdb-secondary: ${secondary};
+      --mdb-btn-color: ${mdb_btn_color};
+      --mdb-link-hover-color-rgb: ${link_cover_color};
+      /* --mdb-link-color: ${adjustColor(primary, { l: +50 })}; */
+      --mdb-secondary-text-emphasis: ${adjustColor(primary, { l: +65 })};
+    }
+    [data-bs-theme="dark"] .btn-outline-secondary {
+      --mdb-btn-color: ${mdb_btn_color_hue};
+      --mdb-btn-hover-bg: ${adjustColor(primary, { l: -20 })};
+      --mdb-btn-hover-color: ${mdb_btn_hover_color};
+      --mdb-btn-focus-bg: ${mdb_btn_hover_bg};
+      --mdb-btn-focus-color: ${mdb_btn_hover_color};
+      --mdb-btn-active-bg: ${mdb_btn_hover_bg};
+      --mdb-btn-active-color: ${mdb_btn_hover_color};
+      --mdb-btn-outline-border-color: ${mdb_btn_outline_border_color};
+      --mdb-btn-outline-focus-border-color: ${mdb_btn_outline_focus_border_color};
+      --mdb-btn-outline-hover-border-color: ${mdb_btn_outline_focus_border_color};
+    }
+    [data-bs-theme="light"] .btn-outline-secondary {
+      --mdb-btn-color: ${mdb_btn_color_hue};
+      /* --mdb-btn-hover-bg: ${mdb_btn_hover_bg}; */
+      --mdb-btn-hover-color: ${mdb_btn_hover_color};
+      --mdb-btn-focus-bg: ${mdb_btn_hover_bg};
+      --mdb-btn-focus-color: ${mdb_btn_hover_color};
+      --mdb-btn-active-bg: ${adjustColor(primary, { l: +80 })};
+      --mdb-btn-active-color: ${mdb_btn_hover_color};
+      --mdb-btn-outline-border-color: ${mdb_btn_outline_border_color};
+      --mdb-btn-outline-focus-border-color: ${mdb_btn_outline_focus_border_color};
+      --mdb-btn-outline-hover-border-color: ${mdb_btn_outline_focus_border_color};
+    }
+    [data-bs-theme="dark"] .btn-outline-primary {
+      --mdb-btn-color: ${adjustColor(primary, { l: +15 })};
+      --mdb-btn-hover-bg: ${adjustColor(primary, { l: -50 })};
+      --mdb-btn-hover-color: ${adjustColor(primary, { l: -5 })};
+      --mdb-btn-focus-bg: ${adjustColor(primary, { l: -50 })};
+      --mdb-btn-focus-color: ${adjustColor(primary, { l: -5 })};
+      --mdb-btn-active-bg: ${adjustColor(primary, { l: -50 })};
+      --mdb-btn-active-color: ${adjustColor(primary, { l: -8 })};
+    }
+    .btn-outline-primary {
+      --mdb-btn-hover-bg: ${adjustColor(primary, { l: +42 })};
+      --mdb-btn-hover-color: ${adjustColor(primary, { l: -5 })};
+      --mdb-btn-focus-bg: ${adjustColor(primary, { l: +42 })};  
+      --mdb-btn-focus-color: ${adjustColor(primary, { l: -5 })}
+      --mdb-btn-active-bg: ${adjustColor(primary, { l: +42 })}; 
+      --mdb-btn-active-color: ${adjustColor(primary, { l: -8 })}
+      --mdb-btn-outline-focus-border-color: ${adjustColor(primary, { l: -10 })};
+      --mdb-btn-outline-hover-border-color: ${adjustColor(primary, { l: -10 })};
+    }
+    [data-bs-theme=dark] .btn-secondary {
+      --mdb-btn-bg: ${mdb_btn_hover_color};
+      --mdb-btn-hover-bg: ${mdb_btn_outline_border_color};
+      --mdb-btn-focus-bg: ${mdb_btn_outline_border_color};
+      --mdb-btn-active-bg: ${mdb_btn_outline_border_color};
+    }
+    .btn-secondary {
+      --mdb-btn-bg: ${mdb_btn_hover_color};
+      --mdb-btn-hover-bg: ${mdb_btn_outline_border_color};
+      --mdb-btn-focus-bg: ${mdb_btn_outline_border_color};
+      --mdb-btn-active-bg: ${mdb_btn_outline_border_color};
+      --mdb-btn-color: ${mdb_btn_color_secondary};
+      --mdb-btn-hover-color: ${mdb_btn_color_secondary};
+      --mdb-btn-focus-color: ${mdb_btn_color_secondary};
+      --mdb-btn-active-color: ${mdb_btn_color_secondary};
+    }
+    .btn-primary {
+      --mdb-btn-hover-bg: ${link_cover_color};
+      --mdb-btn-active-bg: ${link_cover_color};
+      --mdb-btn-focus-bg: ${link_cover_color};
+    }
     .dropdown-menu.dropdown-menu-end {
       max-width: fit-content;
+    }
+    @media (min-width: 576px) {
+      .container-sm,
+      .container {
+        max-width: ${config.fluid ? "100%" : "540px"};
+      }
+    }
+    @media (min-width: 768px) {
+      .container-md,
+      .container-sm,
+      .container {
+        max-width: ${config.fluid ? "100%" : "720px"};
+      }
+    }
+    @media (min-width: 992px) {
+      .container-lg,
+      .container-md,
+      .container-sm,
+      .container {
+        max-width: ${config.fluid ? "100%" : "960px"};
+      }
+    }
+    @media (min-width: 1200px) {
+      .container-xl,
+      .container-lg,
+      .container-md,
+      .container-sm,
+      .container {
+        max-width: ${config.fluid ? "100%" : "1140px"};
+      }
+    }
+    @media (min-width: 1400px) {
+      .container-xxl,
+      .container-xl,
+      .container-lg,
+      .container-md,
+      .container-sm,
+      .container {
+        max-width: ${config.fluid ? "100%" : "1320px"};
+      }
     }
     </style>
   </body>
 </html>`;
+};
 
 const header_sections = (brand, sections, currentUrl, config, user, title) => {
   if (!sections && !brand) return "";
@@ -609,24 +847,25 @@ const authBrand = (config, { name, logo }) =>
     ? `<img class="mb-4" src="${logo}" alt="Logo" width="72" height="72">`
     : "";
 
-const layout = (config) => ({
-  wrap: ({
-    title,
-    menu,
-    brand,
-    alerts,
-    currentUrl,
-    body,
-    headers,
-    role,
-    req,
-  }) =>
-    wrapIt(
-      config,
-      'id="page-top"',
-      headers,
+const layout = (config) => {
+  return {
+    wrap: ({
       title,
-      `
+      menu,
+      brand,
+      alerts,
+      currentUrl,
+      body,
+      headers,
+      role,
+      req,
+    }) =>
+      wrapIt(
+        config,
+        'id="page-top"',
+        headers,
+        title,
+        `
       <div id="wrapper">
       ${header_sections(brand, menu, currentUrl, config, req?.user, title)}
         <div class="container-xl">
@@ -638,25 +877,25 @@ const layout = (config) => ({
         </div>
     </div>
     `
-    ),
-  renderBody: ({ title, body, alerts, role }) =>
-    renderBody(title, body, alerts, config, role),
-  authWrap: ({
-    title,
-    alerts, //TODO
-    form,
-    afterForm,
-    headers,
-    brand,
-    csrfToken,
-    authLinks,
-  }) =>
-    wrapIt(
-      config,
-      'class="text-center"',
-      headers,
+      ),
+    renderBody: ({ title, body, alerts, role }) =>
+      renderBody(title, body, alerts, config, role),
+    authWrap: ({
       title,
-      `
+      alerts, //TODO
+      form,
+      afterForm,
+      headers,
+      brand,
+      csrfToken,
+      authLinks,
+    }) =>
+      wrapIt(
+        config,
+        'class="text-center"',
+        headers,
+        title,
+        `
   <div class="form-signin">
     ${alerts.map((a) => alert(a.type, a.msg)).join("")}
     ${authBrand(config, brand)}
@@ -719,8 +958,9 @@ body {
     </style>
   </div>
   `
-    ),
-});
+      ),
+  };
+};
 const renderAuthLinks = (authLinks) => {
   var links = [];
   if (authLinks.login)
@@ -746,6 +986,27 @@ const formModify = (form) => {
   form.formStyle = "vert";
   form.submitButtonClass = "btn-primary btn-user btn-block";
   return form;
+};
+
+const user_config_form = (ctx) => {
+  return new Form({
+    fields: [
+      {
+        name: "mode",
+        label: "Mode",
+        type: "String",
+        required: true,
+        default: ctx?.mode || "light",
+        attributes: {
+          options: [
+            { name: "light", label: "Light" },
+            { name: "dark", label: "Dark" },
+            { name: "auto", label: "Auto" },
+          ],
+        },
+      },
+    ],
+  });
 };
 
 const configuration_workflow = () =>
@@ -827,8 +1088,13 @@ const configuration_workflow = () =>
                 showIf: { layout_style: "Horizontal" },
               },
               {
+                name: "fluid",
+                label: "Fluid",
+                type: "Bool",
+              },
+              {
                 name: "mode",
-                label: "Color Mode",
+                label: "Mode",
                 type: "String",
                 required: true,
                 default: "light",
@@ -850,6 +1116,22 @@ const configuration_workflow = () =>
                   options: ["Horizontal", "Vertical"],
                 },
               },
+              // select primary color
+              {
+                name: "primary_color",
+                label: "Primary Color",
+                type: "Color",
+                default: "#3b71ca",
+                required: false,
+              },
+              // select secondary color
+              {
+                name: "secondary_color",
+                label: "Secondary Color",
+                type: "Color",
+                default: "#9fa6b2",
+                required: false,
+              },
             ],
           });
         },
@@ -861,5 +1143,6 @@ module.exports = {
   sc_plugin_api_version: 1,
   layout,
   configuration_workflow,
+  user_config_form,
   plugin_name: "material-design",
 };

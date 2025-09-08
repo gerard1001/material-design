@@ -35,7 +35,8 @@ const renderLayout = require("@saltcorn/markup/layout");
 const Form = require("@saltcorn/data/models/form");
 const Workflow = require("@saltcorn/data/models/workflow");
 const { renderForm, link } = require("@saltcorn/markup");
-const { features } = require("@saltcorn/data/db/state");
+const { features, getState } = require("@saltcorn/data/db/state");
+
 
 const verstring = features?.version_plugin_serve_path
   ? "@" + require("./package.json").version
@@ -849,6 +850,9 @@ const authBrand = (config, { name, logo }) =>
     : "";
 
 const layout = (config) => {
+  getState().plugin_cfgs["any-bootstrap-theme"] = {
+    backgroundColorDark: "#424242",
+  };
   return {
     wrap: ({
       title,

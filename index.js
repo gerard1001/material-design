@@ -561,6 +561,7 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
     <script>
       window.bootstrap = window.mdb;
     </script>
+    <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/mdb-jquery-bridge.js"></script>
 
     ${headersInBody(headers)}
     ${config.colorscheme === "navbar-light" ? navbarSolidOnScroll : ""}

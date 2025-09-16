@@ -1,0 +1,11 @@
+body.fluid .container-xl,
+body.fluid .container-lg,
+body.fluid .container-md,
+body.fluid .container-sm,
+body.fluid .container {
+  max-width: 100%;
+}
+
+body.fluid .container-xl {
+  width: 100%;
+}

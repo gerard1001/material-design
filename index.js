@@ -421,6 +421,7 @@ const renderBody = (title, body, alerts, config, role) =>
   });
 
 const wrapIt = (config, bodyAttr, headers, title, body) => {
+  config["backgroundColorDark"] = "#424242";
   const primary = config?.primary_color || "#3b71ca";
   const secondary = config?.secondary_color || "#9fa6b2";
   const hexToRgb = (hex) => {
@@ -546,11 +547,13 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
     <link href="/plugins/public/material-design${verstring}/css/mdb.min.css" rel="stylesheet">
     <!-- Plugin Custom Styles -->
     <link href="/plugins/public/material-design${verstring}/css/sidenav.css" rel="stylesheet">
-
+    <link href="/plugins/public/material-design${verstring}/css/fluid.css" rel="stylesheet">
     ${headersInHead(headers)}
     <title>${text(title)}</title>
   </head>
-  <body ${bodyAttr} class="${config.mode === "dark" ? "bg-dark" : ""}">
+  <body ${bodyAttr} class="${config.mode === "dark" ? "bg-dark" : ""} ${
+    config.fluid ? "fluid" : ""
+  }">
     ${body}
     <script src="https://code.jquery.com/jquery-3.4.1.min.js" 
             integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" 
@@ -654,46 +657,6 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
     }
     .dropdown-menu.dropdown-menu-end {
       max-width: fit-content;
-    }
-    @media (min-width: 576px) {
-      .container-sm,
-      .container {
-        max-width: ${config.fluid ? "100%" : "540px"};
-      }
-    }
-    @media (min-width: 768px) {
-      .container-md,
-      .container-sm,
-      .container {
-        max-width: ${config.fluid ? "100%" : "720px"};
-      }
-    }
-    @media (min-width: 992px) {
-      .container-lg,
-      .container-md,
-      .container-sm,
-      .container {
-        max-width: ${config.fluid ? "100%" : "960px"};
-      }
-    }
-    @media (min-width: 1200px) {
-      .container-xl,
-      .container-lg,
-      .container-md,
-      .container-sm,
-      .container {
-        max-width: ${config.fluid ? "100%" : "1140px"};
-      }
-    }
-    @media (min-width: 1400px) {
-      .container-xxl,
-      .container-xl,
-      .container-lg,
-      .container-md,
-      .container-sm,
-      .container {
-        max-width: ${config.fluid ? "100%" : "1320px"};
-      }
     }
     </style>
   </body>
@@ -849,31 +812,27 @@ const authBrand = (config, { name, logo }) =>
     ? `<img class="mb-4" src="${logo}" alt="Logo" width="72" height="72">`
     : "";
 
-const layout = (config) => {
-  getState().plugin_cfgs["any-bootstrap-theme"] = {
-    backgroundColorDark: "#424242",
-  };
-  return {
-    wrap: ({
-      title,
-      menu,
-      brand,
-      alerts,
-      currentUrl,
-      body,
+const layout = (config) => ({
+  wrap: ({
+    title,
+    menu,
+    brand,
+    alerts,
+    currentUrl,
+    body,
+    headers,
+    role,
+    req,
+  }) =>
+    wrapIt(
+      config,
+      'id="page-top"',
       headers,
-      role,
-      req,
-    }) =>
-      wrapIt(
-        config,
-        'id="page-top"',
-        headers,
-        title,
-        `
+      title,
+      `
       <div id="wrapper">
       ${header_sections(brand, menu, currentUrl, config, req?.user, title)}
-        <div class="container-xl">
+        <div class="${config.fluid ? "container-fluid" : "container-xl"}">
           <div class="row">
             <div class="col-sm-12" id="page-inner-content">
               ${renderBody(title, body, alerts, config, role)}
@@ -882,25 +841,25 @@ const layout = (config) => {
         </div>
     </div>
     `
-      ),
-    renderBody: ({ title, body, alerts, role }) =>
-      renderBody(title, body, alerts, config, role),
-    authWrap: ({
-      title,
-      alerts, //TODO
-      form,
-      afterForm,
+    ),
+  renderBody: ({ title, body, alerts, role }) =>
+    renderBody(title, body, alerts, config, role),
+  authWrap: ({
+    title,
+    alerts, //TODO
+    form,
+    afterForm,
+    headers,
+    brand,
+    csrfToken,
+    authLinks,
+  }) =>
+    wrapIt(
+      config,
+      'class="text-center"',
       headers,
-      brand,
-      csrfToken,
-      authLinks,
-    }) =>
-      wrapIt(
-        config,
-        'class="text-center"',
-        headers,
-        title,
-        `
+      title,
+      `
   <div class="form-signin">
     ${alerts.map((a) => alert(a.type, a.msg)).join("")}
     ${authBrand(config, brand)}
@@ -963,9 +922,8 @@ body {
     </style>
   </div>
   `
-      ),
-  };
-};
+    ),
+});
 const renderAuthLinks = (authLinks) => {
   var links = [];
   if (authLinks.login)

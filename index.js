@@ -421,7 +421,7 @@ const renderBody = (title, body, alerts, config, role) =>
   });
 
 const wrapIt = (config, bodyAttr, headers, title, body) => {
-  config["backgroundColorDark"] = "#424242";
+  //config["backgroundColorDark"] = "#424242";
   const primary = config?.primary_color || "#3b71ca";
   const secondary = config?.secondary_color || "#9fa6b2";
   const hexToRgb = (hex) => {
@@ -974,6 +974,10 @@ const user_config_form = (ctx) => {
 
 const configuration_workflow = () =>
   new Workflow({
+    onDone: (ctx) => {
+      ctx.backgroundColorDark = "#424242";
+      return ctx
+    },
     steps: [
       {
         name: "stylesheet",

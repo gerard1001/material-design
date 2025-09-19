@@ -37,7 +37,6 @@ const Workflow = require("@saltcorn/data/models/workflow");
 const { renderForm, link } = require("@saltcorn/markup");
 const { features, getState } = require("@saltcorn/data/db/state");
 
-
 const verstring = features?.version_plugin_serve_path
   ? "@" + require("./package.json").version
   : "";
@@ -555,9 +554,7 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
     config.fluid ? "fluid" : ""
   }">
     ${body}
-    <script src="https://code.jquery.com/jquery-3.4.1.min.js" 
-            integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" 
-            crossorigin="anonymous"></script>
+      <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/popper.min.js"></script>
     <!-- MDB core JavaScript -->
     <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/mdb.min.js"></script>

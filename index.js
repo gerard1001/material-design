@@ -546,26 +546,7 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
     <link href="/plugins/public/material-design${verstring}/css/mdb.min.css" rel="stylesheet">
     <!-- Plugin Custom Styles -->
     <link href="/plugins/public/material-design${verstring}/css/sidenav.css" rel="stylesheet">
-    <link href="/plugins/public/material-design${verstring}/css/fluid.css" rel="stylesheet">
     ${headersInHead(headers)}
-    <title>${text(title)}</title>
-  </head>
-  <body ${bodyAttr} class="${config.mode === "dark" ? "bg-dark" : ""} ${
-    config.fluid ? "fluid" : ""
-  }">
-    ${body}
-      <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-    <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/popper.min.js"></script>
-    <!-- MDB core JavaScript -->
-    <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/mdb.min.js"></script>
-    <!-- Bind window.mdb to window.bootstrap for backward compatibility -->
-    <script>
-      window.bootstrap = window.mdb;
-    </script>
-    <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/mdb-jquery-bridge.js"></script>
-
-    ${headersInBody(headers)}
-    ${config.colorscheme === "navbar-light" ? navbarSolidOnScroll : ""}
     <style>
     :root,
     [data-bs-theme="light"] {
@@ -655,7 +636,123 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
     .dropdown-menu.dropdown-menu-end {
       max-width: fit-content;
     }
+    /* Search component in "Page Configuration" */
+    [data-bs-theme="dark"] input.form-control.bg-light {
+      background-color: var(--mdb-dark) !important;
+      color: var(--mdb-light) !important;
+    }
+    [data-bs-theme="dark"] .css-26l3qy-menu {
+      background-color: var(--mdb-dark) !important;
+      border: 1px solid var(--mdb-dark-border-subtle) !important;
+    }
+    [data-bs-theme="dark"] .css-yt9ioa-option:hover {
+      background-color: #424242 !important;
+      color: var(--mdb-light) !important;
+    }
+    [data-bs-theme="dark"] .css-1n7v3ny-option {
+      background-color: #424242 !important;
+    }
+    [data-bs-theme="dark"] .css-yk16xz-control {
+      background-color: #333;
+      border-color: var(--mdb-dark-border-subtle) !important;
+    }
+    [data-bs-theme="dark"] .css-1pahdxg-control {
+      background-color: #333 !important;
+    }
+    [data-bs-theme="dark"] .css-1uccc91-singleValue {
+      color: #fefefe !important;
+    }
+    [data-bs-theme="dark"] .css-8mmkcg {
+      fill: #ccc !important;
+    }
+    /* Icons selector */
+    [data-bs-theme="dark"] .rfipbtn--default {
+      background-color: var(--mdb-dark);
+      border: 1px solid var(--mdb-dark-border-subtle);
+    }
+    [data-bs-theme="dark"] .rfipbtn--default .rfipbtn__button {
+      border-left: 1px solid var(--mdb-dark-border-subtle);
+      background-color: var(--mdb-dark-bg-subtle);
+      color: #e0e0e0;
+    }
+    [data-bs-theme="dark"] .rfipbtn--default .rfipbtn__button:hover {
+      background-color: var(--mdb-dark-bg-subtle);
+      color: #e0e0e0;
+    }
+    [data-bs-theme="dark"] .rfipbtn--default:active,
+    [data-bs-theme="dark"] .rfipbtn--default:focus {
+      border: 1px solid var(--mdb-primary);
+    }
+    [data-bs-theme="dark"] .rfipdropdown--default {
+      -webkit-box-shadow: 0 15px 24px rgba(0, 0, 0, .22), 0 19px 76px rgba(0, 0, 0, .3);
+      box-shadow: 0 15px 24px rgba(0, 0, 0, .22), 0 19px 76px rgba(0, 0, 0, .3);
+      color: var(--mdb-light);
+      background-color: var(--mdb-dark);
+      border: 1px solid var(--mdb-dark-border-subtle);
+    }
+    [data-bs-theme="dark"] .rfipdropdown--default input, .rfipdropdown--default select {
+      color: var(--mdb-light);
+    }
+    [data-bs-theme="dark"] 
+      .rfipdropdown--default .rfipicons__ibox,
+    [data-bs-theme="dark"] 
+      .rfipdropdown--default .rfipicons__left,
+    [data-bs-theme="dark"] 
+      .rfipdropdown--default .rfipicons__right {
+      background-color: var(--mdb-dark-bg-subtle);
+      border: 1px solid var(--mdb-dark-border-subtle);
+      color: var(--mdb-light);
+    }
+    [data-bs-theme="dark"] 
+      .rfipdropdown--default .rfipicons__ibox:hover,
+    [data-bs-theme="dark"] 
+      .rfipdropdown--default .rfipicons__left:hover,
+    [data-bs-theme="dark"] 
+      .rfipdropdown--default .rfipicons__right:hover {
+      background-color: var(--mdb-dark);
+      color: var(--mdb-light);
+    }
+    [data-bs-theme="dark"] 
+    .rfipbtn--default .rfipbtn__icon {
+      border: 1px solid #6a6a6a;
+      color: var(--mdb-light);
+    }
+    [data-bs-theme="dark"] 
+    .rfipbtn--default .rfipbtn__del {
+      background-color: #6a6a6a;
+    }  
+    [data-bs-theme="dark"] 
+    .rfipbtn--default .rfipbtn__del:hover {
+        background-color: #8e8e8e;
+    }
+    [data-bs-theme="dark"] 
+    .rfipdropdown--default .rfipicons__icon--selected .rfipicons__ibox {
+      background-color: var(--mdb-primary);
+    }
+    /* Layers section single element hover class */
+    [data-bs-theme="dark"]
+    .bpkdMP {
+      background: var(--mdb-dark);
+    }
     </style>
+    <title>${text(title)}</title>
+  </head>
+  <body ${bodyAttr} class="${config.mode === "dark" ? "bg-dark" : ""} ${
+    config.fluid ? "fluid" : ""
+  }">
+    ${body}
+      <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/popper.min.js"></script>
+    <!-- MDB core JavaScript -->
+    <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/mdb.min.js"></script>
+    <!-- Bind window.mdb to window.bootstrap for backward compatibility -->
+    <script>
+      window.bootstrap = window.mdb;
+    </script>
+    <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/mdb-jquery-bridge.js"></script>
+
+    ${headersInBody(headers)}
+    ${config.colorscheme === "navbar-light" ? navbarSolidOnScroll : ""}
   </body>
 </html>`;
 };

@@ -36,6 +36,10 @@ const Form = require("@saltcorn/data/models/form");
 const Workflow = require("@saltcorn/data/models/workflow");
 const { renderForm, link } = require("@saltcorn/markup");
 const { features, getState } = require("@saltcorn/data/db/state");
+const Plugin = require("@saltcorn/data/models/plugin");
+const User = require("@saltcorn/data/models/user");
+const db = require("@saltcorn/data/db");
+const { sleep } = require("@saltcorn/data/utils");
 
 const verstring = features?.version_plugin_serve_path
   ? "@" + require("./package.json").version
@@ -442,7 +446,7 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
   };
   const primary_rgb = hexToRgb(primary);
   const secondary_rgb = hexToRgb(secondary);
-  const adjustColor = (hex, { h = 0, s = 0, l = 0 }) => {
+  const adjustColor = (hex, { h = 0, s = 0, l = 0, a = 1 } = {}) => {
     let cleanHex = hex.startsWith("#") ? hex.slice(1) : hex;
     if (cleanHex.length === 3) {
       cleanHex = cleanHex
@@ -485,7 +489,7 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
       hVal /= 6;
     }
 
-    // Adjustments
+    // Apply adjustments
     hVal = ((hVal * 360 + h) % 360) / 360;
     sVal = Math.min(1, Math.max(0, sVal + s / 100));
     lVal = Math.min(1, Math.max(0, lVal + l / 100));
@@ -511,14 +515,19 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
       bOut = hue2rgb(p, q, hVal - 1 / 3);
     }
 
+    const rFinal = Math.round(rOut * 255);
+    const gFinal = Math.round(gOut * 255);
+    const bFinal = Math.round(bOut * 255);
+
+    // If alpha < 1, return rgba, else hex
+    if (a < 1) {
+      return `rgba(${rFinal}, ${gFinal}, ${bFinal}, ${a})`;
+    }
+
     return (
       "#" +
-      [rOut, gOut, bOut]
-        .map((x) =>
-          Math.round(x * 255)
-            .toString(16)
-            .padStart(2, "0")
-        )
+      [rFinal, gFinal, bFinal]
+        .map((x) => x.toString(16).padStart(2, "0"))
         .join("")
     );
   };
@@ -571,24 +580,25 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
     }
     [data-bs-theme="dark"] .btn-outline-secondary {
       --mdb-btn-color: ${mdb_btn_color_hue};
-      --mdb-btn-hover-bg: ${adjustColor(primary, { l: -20 })};
+      --mdb-btn-hover-bg: ${adjustColor(primary, { l: 20, a: 0.1 })};
       --mdb-btn-hover-color: ${mdb_btn_hover_color};
-      --mdb-btn-focus-bg: ${mdb_btn_hover_bg};
+      --mdb-btn-focus-bg: ${adjustColor(primary, { l: 20, a: 0.5 })};
       --mdb-btn-focus-color: ${mdb_btn_hover_color};
-      --mdb-btn-active-bg: ${mdb_btn_hover_bg};
+      --mdb-btn-active-bg: ${adjustColor(primary, { l: 10, a: 0.4 })};
       --mdb-btn-active-color: ${mdb_btn_hover_color};
       --mdb-btn-outline-border-color: ${mdb_btn_outline_border_color};
       --mdb-btn-outline-focus-border-color: ${mdb_btn_outline_focus_border_color};
       --mdb-btn-outline-hover-border-color: ${mdb_btn_outline_focus_border_color};
+      --mdb-btn-active-border-color: ${mdb_btn_outline_focus_border_color};
     }
     [data-bs-theme="light"] .btn-outline-secondary {
       --mdb-btn-color: ${mdb_btn_color_hue};
-      /* --mdb-btn-hover-bg: ${mdb_btn_hover_bg}; */
-      --mdb-btn-hover-color: ${mdb_btn_hover_color};
-      --mdb-btn-focus-bg: ${mdb_btn_hover_bg};
+      --mdb-btn-hover-bg: ${adjustColor(primary, { l: 20, a: 0.1 })};
+      --mdb-btn-hover-color: ${adjustColor(primary, { l: +5 })};
+      --mdb-btn-focus-bg: ${adjustColor(primary, { l: 20, a: 0.2 })};
       --mdb-btn-focus-color: ${mdb_btn_hover_color};
-      --mdb-btn-active-bg: ${adjustColor(primary, { l: +80 })};
-      --mdb-btn-active-color: ${mdb_btn_hover_color};
+      --mdb-btn-active-bg: ${adjustColor(primary, { l: 10, a: 0.2 })};
+      --mdb-btn-active-color: ${adjustColor(primary, { l: -5 })};
       --mdb-btn-outline-border-color: ${mdb_btn_outline_border_color};
       --mdb-btn-outline-focus-border-color: ${mdb_btn_outline_focus_border_color};
       --mdb-btn-outline-hover-border-color: ${mdb_btn_outline_focus_border_color};
@@ -1070,7 +1080,7 @@ const configuration_workflow = () =>
   new Workflow({
     onDone: (ctx) => {
       ctx.backgroundColorDark = "#424242";
-      return ctx
+      return ctx;
     },
     steps: [
       {
@@ -1206,4 +1216,43 @@ module.exports = {
   configuration_workflow,
   user_config_form,
   plugin_name: "material-design",
+  actions: () => ({
+    toggle_material_dark_mode: {
+      description: "Switch between dark and light mode",
+      configFields: [],
+      run: async ({ user, req }) => {
+        let plugin = await Plugin.findOne({ name: "material-design" });
+        if (!plugin) {
+          plugin = await Plugin.findOne({
+            name: "@saltcorn/material-design",
+          });
+        }
+        const dbUser = await User.findOne({ id: user.id });
+        const attrs = dbUser._attributes || {};
+        const userLayout = attrs.layout || {
+          config: {},
+        };
+        userLayout.plugin = plugin.name;
+        const currentMode = userLayout.config.mode
+          ? userLayout.config.mode
+          : plugin.configuration?.mode
+          ? plugin.configuration.mode
+          : "light";
+        userLayout.config.mode = currentMode === "dark" ? "light" : "dark";
+        userLayout.config.is_user_config = true;
+        attrs.layout = userLayout;
+        await dbUser.update({ _attributes: attrs });
+        getState().processSend({
+          refresh_plugin_cfg: plugin.name,
+          tenant: db.getTenantSchema(),
+        });
+        getState().userLayouts[user.email] = layout({
+          ...(plugin.configuration ? plugin.configuration : {}),
+          ...userLayout.config,
+        });
+        await sleep(500);
+        return { reload_page: true };
+      },
+    },
+  }),
 };

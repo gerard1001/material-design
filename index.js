@@ -325,6 +325,8 @@ const showBrand = (brand, config) =>
     !config?.hide_site_name && brand.name
   );
 
+const isNode = typeof window === "undefined";
+
 const blockDispatch = (config) => ({
   pageHeader: ({ title, blurb }) =>
     div(
@@ -373,14 +375,23 @@ const blockDispatch = (config) => ({
     ),
   noBackgroundAtTop: () => true,
   wrapTop: (segment, ix, s) =>
-    ["hero", "footer"].includes(segment.type)
+    ["hero", "footer"].includes(segment.type) || segment.noWrapTop
       ? s
       : section(
           {
             class: [
               "page-section",
-              `pt-2`,
-              ix === 0 && config.fixedTop && "mt-5",
+              ix === 0 && `pt-${config.toppad || 0}`,
+              ix === 0 &&
+                config.fixedTop &&
+                config.layout_style !== "Vertical" &&
+                isNode &&
+                "mt-5",
+              ix === 0 &&
+                config.fixedTop &&
+                config.layout_style !== "Vertical" &&
+                !isNode &&
+                "mt-6",
               segment.class,
               segment.invertColor && "bg-primary",
             ],
@@ -388,25 +399,10 @@ const blockDispatch = (config) => ({
               segment.bgType === "Color"
                 ? `background-color: ${segment.bgColor};`
                 : ""
-            }
-              ${
-                segment.bgType === "Image" &&
-                segment.bgFileId &&
-                +segment.bgFileId
-                  ? `background-image: url('/files/serve/${segment.bgFileId}');
-          background-size: ${segment.imageSize || "contain"};
-          background-repeat: no-repeat;`
-                  : ""
-              }`,
+            }`,
           },
           div(
-            {
-              class: `${
-                segment.textStyle && segment.textStyle !== "h1"
-                  ? segment.textStyle
-                  : ""
-              }`,
-            },
+            { class: [config.fluid ? "container-fluid" : "container"] },
             segment.textStyle && segment.textStyle === "h1" ? h1(s) : s
           )
         ),
@@ -744,6 +740,9 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
     .bpkdMP {
       background: var(--mdb-dark);
     }
+    .navbar {
+      backdrop-filter: blur(2px);
+    }
     </style>
     <title>${text(title)}</title>
   </head>
@@ -758,6 +757,17 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
     <!-- Bind window.mdb to window.bootstrap for backward compatibility -->
     <script>
       window.bootstrap = window.mdb;
+      document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll("section.page-section.pt-4.mt-5").forEach(section => {
+          const container = section.querySelector(":scope > .container-fluid");
+          if (!container) return;
+
+          const firstChild = container.firstElementChild;
+          if (firstChild && firstChild.classList.contains("full-page-width")) {
+            section.classList.remove("pt-4", "mt-5");
+          }
+        });
+      });
     </script>
     <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/mdb-jquery-bridge.js"></script>
 
@@ -1076,7 +1086,7 @@ const user_config_form = (ctx) => {
   });
 };
 
-const configuration_workflow = () =>
+const configuration_workflow = (config) =>
   new Workflow({
     onDone: (ctx) => {
       ctx.backgroundColorDark = "#424242";
@@ -1141,7 +1151,7 @@ const configuration_workflow = () =>
                     },
                     { name: "navbar-light bg-light", label: "Light" },
                     { name: "navbar-light bg-white", label: "White" },
-                    { name: "navbar-light", label: "Transparent Light" },
+                    { name: "", label: "Transparent Light" },
                     {
                       name: "navbar-scrolling bg-light",
                       label: "Scrolling Light",
@@ -1187,7 +1197,18 @@ const configuration_workflow = () =>
                   options: ["Horizontal", "Vertical"],
                 },
               },
-              // select primary color
+              {
+                name: "toppad",
+                label: "Top padding",
+                sublabel: "0-5 depending on Navbar height and configuration",
+                type: "Integer",
+                required: true,
+                default: 2,
+                attributes: {
+                  max: 5,
+                  min: 0,
+                },
+              },
               {
                 name: "primary_color",
                 label: "Primary Color",
@@ -1195,7 +1216,6 @@ const configuration_workflow = () =>
                 default: "#3b71ca",
                 required: false,
               },
-              // select secondary color
               {
                 name: "secondary_color",
                 label: "Secondary Color",

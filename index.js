@@ -313,7 +313,6 @@ const showBrand = (brand, config) =>
   a(
     {
       href: "/",
-      // class: "navbar-brand navbar-brand-autodark d-none-navbar-horizontal",
       class: "navbar-brand navbar-brand-autodark d-none-navbar-horizontal",
     },
     brand.logo &&
@@ -381,17 +380,18 @@ const blockDispatch = (config) => ({
           {
             class: [
               "page-section",
+              "fw-check",
               ix === 0 && `pt-${config.toppad || 0}`,
               ix === 0 &&
                 config.fixedTop &&
                 config.layout_style !== "Vertical" &&
                 isNode &&
-                "mt-5",
+                "mt-6",
               ix === 0 &&
                 config.fixedTop &&
                 config.layout_style !== "Vertical" &&
                 !isNode &&
-                "mt-6",
+                "mt-5",
               segment.class,
               segment.invertColor && "bg-primary",
             ],
@@ -612,9 +612,9 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
       --mdb-btn-hover-bg: ${adjustColor(primary, { l: +42 })};
       --mdb-btn-hover-color: ${adjustColor(primary, { l: -5 })};
       --mdb-btn-focus-bg: ${adjustColor(primary, { l: +42 })};  
-      --mdb-btn-focus-color: ${adjustColor(primary, { l: -5 })}
+      --mdb-btn-focus-color: ${adjustColor(primary, { l: -5 })};
       --mdb-btn-active-bg: ${adjustColor(primary, { l: +42 })}; 
-      --mdb-btn-active-color: ${adjustColor(primary, { l: -8 })}
+      --mdb-btn-active-color: ${adjustColor(primary, { l: -8 })};
       --mdb-btn-outline-focus-border-color: ${adjustColor(primary, { l: -10 })};
       --mdb-btn-outline-hover-border-color: ${adjustColor(primary, { l: -10 })};
     }
@@ -740,14 +740,68 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
     .bpkdMP {
       background: var(--mdb-dark);
     }
-    .navbar {
+    
+    section.page-section.fw-check:has(> .container > .full-page-width:first-child),
+    section.page-section.fw-check:has(> .container-fluid > .full-page-width:first-child) {
+      padding-top: 0 !important;
+      margin-top: 0 !important;
+    }
+
+    /* Fixed-top navbar becomes overlay if first section is full-width */
+    body:has(section.page-section.fw-check:first-of-type > .container > .full-page-width:first-child) .navbar.fixed-top,
+    body:has(section.page-section.fw-check:first-of-type > .container-fluid > .full-page-width:first-child) .navbar.fixed-top {
+      background: transparent;
+      box-shadow: none !important;
+    }
+
+    body:has(section.page-section.fw-check:first-of-type > .container > .full-page-width:first-child) .navbar.fixed-top.scrolled,
+    body:has(section.page-section.fw-check:first-of-type > .container-fluid > .full-page-width:first-child) .navbar.fixed-top.scrolled {
       backdrop-filter: blur(2px);
+    }
+
+    /* Navbar becomes overlay automatically if first section is full-width and navbar not fixed */
+    body:has(section.page-section.fw-check:first-of-type > .container > .full-page-width:first-child) .navbar:not(.fixed-top),
+    body:has(section.page-section.fw-check:first-of-type > .container-fluid > .full-page-width:first-child) .navbar:not(.fixed-top) {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      z-index: 1050;
+      background: transparent;
+      box-shadow: none !important;
+    }
+    /* Scroll state (legacy specific rule can stay; universal rule added below) */
+    body:has(section.page-section.fw-check:first-of-type > .container > .full-page-width:first-child) .navbar:not(.fixed-top).scrolled,
+    body:has(section.page-section.fw-check:first-of-type > .container-fluid > .full-page-width:first-child) .navbar:not(.fixed-top).scrolled {
+      backdrop-filter: blur(2px);
+    }
+
+    /* Fixed-top full-width overlay (no box-shadow before scroll) */
+    body:has(section.page-section.fw-check:first-of-type > .container > .full-page-width:first-child) .navbar.fixed-top.navbar-fw-first,
+    body:has(section.page-section.fw-check:first-of-type > .container-fluid > .full-page-width:first-child) .navbar.fixed-top.navbar-fw-first {
+      background: transparent;
+      box-shadow: none !important;
+    }
+
+    /* After scroll threshold, apply blur also for fixed-top */
+    body:has(section.page-section.fw-check:first-of-type > .container > .full-page-width:first-child) .navbar.fixed-top.navbar-fw-first.scrolled,
+    body:has(section.page-section.fw-check:first-of-type > .container-fluid > .full-page-width:first-child) .navbar.fixed-top.navbar-fw-first.scrolled {
+      backdrop-filter: blur(2px);
+    }
+
+    body.layout-vertical .full-page-width {
+      width: 100%;
+      position: relative;
+      left: auto;
+      right: auto;
+      margin-left: 0;
+      margin-right: 0;
     }
     </style>
     <title>${text(title)}</title>
   </head>
   <body ${bodyAttr} class="${config.mode === "dark" ? "bg-dark" : ""} ${
     config.fluid ? "fluid" : ""
+  } ${config.fixedTop ? "fixed-top-layout" : "no-fixed-top-layout"} ${
+    config.layout_style === "Vertical" ? "layout-vertical" : "layout-horizontal"
   }">
     ${body}
       <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
@@ -757,17 +811,53 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
     <!-- Bind window.mdb to window.bootstrap for backward compatibility -->
     <script>
       window.bootstrap = window.mdb;
-      document.addEventListener("DOMContentLoaded", () => {
-        document.querySelectorAll("section.page-section.pt-4.mt-5").forEach(section => {
-          const container = section.querySelector(":scope > .container-fluid");
-          if (!container) return;
+      config = ${JSON.stringify(config || {})};
+      const navbar = document.querySelector(".navbar");
 
-          const firstChild = container.firstElementChild;
-          if (firstChild && firstChild.classList.contains("full-page-width")) {
-            section.classList.remove("pt-4", "mt-5");
-          }
-        });
-      });
+      (function() {
+        const firstFullWidth = document.querySelector(
+          "section.page-section.fw-check > .container > .full-page-width:first-child, \
+           section.page-section.fw-check > .container-fluid > .full-page-width:first-child"
+        );
+
+        if (firstFullWidth && navbar && config.colorscheme === "") {
+          navbar.classList.add("navbar-fw-first");
+
+          const topHeight = firstFullWidth.parentElement.parentElement.clientHeight;
+          const onScroll = () => {
+            const y = window.scrollY || window.pageYOffset;
+            if (y >= topHeight) {
+              navbar.classList.add("scrolled");
+            } else {
+              navbar.classList.remove("scrolled");
+            }
+          };
+          window.addEventListener("scroll", onScroll, { passive: true });
+          onScroll();
+        } else if (navbar && config.colorscheme === "") {
+            navbar.classList.add("scrolled");
+        }
+
+        if (!CSS.supports("selector(:has(*))")) {
+          document.querySelectorAll("section.page-section.fw-check").forEach(sec => {
+            const fw = sec.querySelector(":scope > .container > .full-page-width:first-child, :scope > .container-fluid > .full-page-width:first-child");
+            if (fw) {
+              sec.classList.add("fw-no-spacing");
+              if (navbar && config.colorscheme === "") {
+                if (!navbar.classList.contains("fixed-top")) {
+                  navbar.style.position = "absolute";
+                  navbar.style.top = "0";
+                  navbar.style.left = "0";
+                  navbar.style.right = "0";
+                }
+                navbar.classList.add("navbar-fw-first");
+                navbar.style.background = "transparent";
+                navbar.style.boxShadow = "none";
+              }
+            }
+          });
+        }
+      })();
     </script>
     <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/mdb-jquery-bridge.js"></script>
 

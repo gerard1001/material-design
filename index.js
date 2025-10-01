@@ -420,9 +420,18 @@ const renderBody = (title, body, alerts, config, role) =>
   });
 
 const wrapIt = (config, bodyAttr, headers, title, body) => {
-  //config["backgroundColorDark"] = "#424242";
-  const primary = config?.primary_color || "#3b71ca";
-  const secondary = config?.secondary_color || "#9fa6b2";
+  const primary =
+    config?.mode === "light"
+      ? config?.primary_color_light
+      : config?.mode === "dark"
+      ? config?.primary_color_dark
+      : config?.primary_color || "#3b71ca";
+  const secondary =
+    config?.mode === "light"
+      ? config?.secondary_color_light
+      : config?.mode === "dark"
+      ? config?.secondary_color_dark
+      : config?.secondary_color || "#9fa6b2";
   const hexToRgb = (hex) => {
     let cleanHex = hex.startsWith("#") ? hex.slice(1) : hex;
     if (cleanHex.length === 3) {
@@ -528,7 +537,7 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
     );
   };
 
-  const link_cover_color = adjustColor(primary, { l: -5 });
+  const link_cover_color = adjustColor(primary, { l: -3 });
   const mdb_btn_color = adjustColor(primary, { l: +15 });
   const mdb_btn_outline_focus_border_color = adjustColor(primary, { l: +25 });
   const mdb_btn_outline_border_color = adjustColor(primary, { l: +30 });
@@ -570,6 +579,7 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
       --mdb-primary: ${primary};
       --mdb-secondary: ${secondary};
       --mdb-btn-color: ${mdb_btn_color};
+      --mdb-link-hover-color: ${link_cover_color};
       --mdb-link-hover-color-rgb: ${link_cover_color};
       /* --mdb-link-color: ${adjustColor(primary, { l: +50 })}; */
       --mdb-secondary-text-emphasis: ${adjustColor(primary, { l: +65 })};
@@ -633,6 +643,11 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
       --mdb-btn-hover-color: ${mdb_btn_color_secondary};
       --mdb-btn-focus-color: ${mdb_btn_color_secondary};
       --mdb-btn-active-color: ${mdb_btn_color_secondary};
+    }
+    .btn-primary {
+      --mdb-btn-hover-bg: ${link_cover_color};
+      --mdb-btn-active-bg: ${link_cover_color};
+      --mdb-btn-focus-bg: ${link_cover_color};
     }
     .dropdown-menu.dropdown-menu-end {
       max-width: fit-content;
@@ -735,11 +750,18 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
     .bpkdMP {
       background: var(--mdb-dark);
     }
+    .btn-outline-secondary:disabled, .btn-outline-secondary.disabled, fieldset:disabled .btn-outline-secondary {
+      border-color: var(--mdb-btn-disabled-color) !important;
+    }
     
     section.page-section.fw-check:has(> .container > .full-page-width:first-child),
     section.page-section.fw-check:has(> .container-fluid > .full-page-width:first-child) {
       padding-top: 0 !important;
-      margin-top: ${config.colorscheme === "" || config.colorscheme === "transparent-dark" ? "0" : "3.66rem"} !important;
+      margin-top: ${
+        config.colorscheme === "" || config.colorscheme === "transparent-dark"
+          ? "0"
+          : "3.66rem"
+      } !important;
     }
 
     /* Fixed-top navbar becomes overlay if first section is full-width */
@@ -804,7 +826,9 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
     .navbar.transparent-dark:not(.scrolled) .navbar-brand,
     .navbar.transparent-dark:not(.scrolled) .navbar-text,
     .navbar.transparent-dark:not(.scrolled) .nav-link {
-      color: #fff !important;
+      color: ${
+        config.colorscheme === "transparent-dark" ? "#fff" : "#000"
+      } !important;
     }
     /* Ensure toggler icon (if any) contrasts */
     .navbar.transparent-dark:not(.scrolled) .navbar-toggler {
@@ -835,7 +859,7 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
 
     /* Scrolled state subtle backdrop for transparent variants */
     .navbar.navbar-fw-first.scrolled {
-      backdrop-filter: blur(2px);
+      backdrop-filter: ${config.fixedTop ? "blur(2px)" : "none"};
     }
     </style>
     <title>${text(title)}</title>
@@ -1331,12 +1355,18 @@ const configuration_workflow = (config) =>
                     { name: "", label: "Default" },
                     { name: "navbar-dark bg-dark", label: "Dark" },
                     { name: "navbar-dark bg-primary", label: "Dark Primary" },
-                    { name: "navbar-dark bg-secondary", label: "Dark Secondary" },
+                    {
+                      name: "navbar-dark bg-secondary",
+                      label: "Dark Secondary",
+                    },
                     { name: "navbar-light bg-light", label: "Light" },
                     { name: "navbar-light bg-white", label: "White" },
                     { name: "", label: "Transparent Light" },
                     { name: "transparent-dark", label: "Transparent Dark" },
-                    { name: "navbar-scrolling bg-light", label: "Scrolling Light" },
+                    {
+                      name: "navbar-scrolling bg-light",
+                      label: "Scrolling Light",
+                    },
                     { name: "navbar-scrolled bg-dark", label: "Scrolled Dark" },
                   ],
                 },
@@ -1390,16 +1420,44 @@ const configuration_workflow = (config) =>
                   min: 0,
                 },
               },
+              // {
+              //   name: "primary_color",
+              //   label: "Primary Color",
+              //   type: "Color",
+              //   default: "#3b71ca",
+              //   required: false,
+              // },
+              // {
+              //   name: "secondary_color",
+              //   label: "Secondary Color",
+              //   type: "Color",
+              //   default: "#9fa6b2",
+              //   required: false,
+              // },
               {
-                name: "primary_color",
-                label: "Primary Color",
+                name: "primary_color_light",
+                label: "Primary Color (Light Mode)",
                 type: "Color",
                 default: "#3b71ca",
                 required: false,
               },
               {
-                name: "secondary_color",
-                label: "Secondary Color",
+                name: "secondary_color_light",
+                label: "Secondary Color (Light Mode)",
+                type: "Color",
+                default: "#9fa6b2",
+                required: false,
+              },
+              {
+                name: "primary_color_dark",
+                label: "Primary Color (Dark Mode)",
+                type: "Color",
+                default: "#3b71ca",
+                required: false,
+              },
+              {
+                name: "secondary_color_dark",
+                label: "Secondary Color (Dark Mode)",
                 type: "Color",
                 default: "#9fa6b2",
                 required: false,

@@ -634,11 +634,6 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
       --mdb-btn-focus-color: ${mdb_btn_color_secondary};
       --mdb-btn-active-color: ${mdb_btn_color_secondary};
     }
-    .btn-primary {
-      --mdb-btn-hover-bg: ${link_cover_color};
-      --mdb-btn-active-bg: ${link_cover_color};
-      --mdb-btn-focus-bg: ${link_cover_color};
-    }
     .dropdown-menu.dropdown-menu-end {
       max-width: fit-content;
     }
@@ -744,7 +739,7 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
     section.page-section.fw-check:has(> .container > .full-page-width:first-child),
     section.page-section.fw-check:has(> .container-fluid > .full-page-width:first-child) {
       padding-top: 0 !important;
-      margin-top: 0 !important;
+      margin-top: ${config.colorscheme === "" || config.colorscheme === "transparent-dark" ? "0" : "3.66rem"} !important;
     }
 
     /* Fixed-top navbar becomes overlay if first section is full-width */
@@ -768,7 +763,7 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
       background: transparent;
       box-shadow: none !important;
     }
-    /* Scroll state (legacy specific rule can stay; universal rule added below) */
+    /* Scroll state */
     body:has(section.page-section.fw-check:first-of-type > .container > .full-page-width:first-child) .navbar:not(.fixed-top).scrolled,
     body:has(section.page-section.fw-check:first-of-type > .container-fluid > .full-page-width:first-child) .navbar:not(.fixed-top).scrolled {
       backdrop-filter: blur(2px);
@@ -781,19 +776,66 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
       box-shadow: none !important;
     }
 
-    /* After scroll threshold, apply blur also for fixed-top */
     body:has(section.page-section.fw-check:first-of-type > .container > .full-page-width:first-child) .navbar.fixed-top.navbar-fw-first.scrolled,
     body:has(section.page-section.fw-check:first-of-type > .container-fluid > .full-page-width:first-child) .navbar.fixed-top.navbar-fw-first.scrolled {
       backdrop-filter: blur(2px);
     }
 
-    body.layout-vertical .full-page-width {
-      width: 100%;
-      position: relative;
-      left: auto;
-      right: auto;
-      margin-left: 0;
-      margin-right: 0;
+    body:has(section.page-section.fw-check:first-of-type > .container > .full-page-width:first-child) .navbar:not(.fixed-top).navbar-fw-first,
+    body:has(section.page-section.fw-check:first-of-type > .container-fluid > .full-page-width:first-child) .navbar:not(.fixed-top).navbar-fw-first {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      z-index: 1050;
+      background: transparent;
+      box-shadow: none !important;
+    }
+
+    body:has(section.page-section.fw-check:first-of-type > .container > .full-page-width:first-child) .navbar:not(.fixed-top).navbar-fw-first.scrolled,
+    body:has(section.page-section.fw-check:first-of-type > .container-fluid > .full-page-width:first-child) .navbar:not(.fixed-top).navbar-fw-first.scrolled {
+      backdrop-filter: blur(2px);
+    }
+
+    /* Transparent variants (initial state before scroll) */
+    .navbar.transparent-dark:not(.scrolled),
+    .navbar.navbar-fw-first.transparent-dark:not(.scrolled) {
+      background: transparent !important;
+    }
+    .navbar.transparent-dark:not(.scrolled) .navbar-nav .nav-link,
+    .navbar.transparent-dark:not(.scrolled) .navbar-brand,
+    .navbar.transparent-dark:not(.scrolled) .navbar-text,
+    .navbar.transparent-dark:not(.scrolled) .nav-link {
+      color: #fff !important;
+    }
+    /* Ensure toggler icon (if any) contrasts */
+    .navbar.transparent-dark:not(.scrolled) .navbar-toggler {
+      border-color: rgba(255,255,255,.4);
+    }
+    .navbar.transparent-dark:not(.scrolled) .navbar-toggler-icon {
+      filter: invert(1) brightness(1.2);
+    }
+      
+    /* fixed-top stays fixed; only non fixed-top made absolute */
+    body:has(section.page-section.fw-check:first-of-type > .container > .full-page-width:first-child)
+      .navbar.fixed-top.navbar-fw-first:not(.scrolled),
+    body:has(section.page-section.fw-check:first-of-type > .container-fluid > .full-page-width:first-child)
+      .navbar.fixed-top.navbar-fw-first:not(.scrolled) {
+      background: transparent;
+      box-shadow: none !important;
+    }
+    body:has(section.page-section.fw-check:first-of-type > .container > .full-page-width:first-child)
+      .navbar:not(.fixed-top).navbar-fw-first:not(.scrolled),
+    body:has(section.page-section.fw-check:first-of-type > .container-fluid > .full-page-width:first-child)
+      .navbar:not(.fixed-top).navbar-fw-first:not(.scrolled) {
+      background: transparent;
+      box-shadow: none !important;
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      z-index: 1050;
+    }
+
+    /* Scrolled state subtle backdrop for transparent variants */
+    .navbar.navbar-fw-first.scrolled {
+      backdrop-filter: blur(2px);
     }
     </style>
     <title>${text(title)}</title>
@@ -819,41 +861,95 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
           "section.page-section.fw-check > .container > .full-page-width:first-child, \
            section.page-section.fw-check > .container-fluid > .full-page-width:first-child"
         );
+        const isTransparent =
+          config.colorscheme === "" || config.colorscheme === "transparent-dark";
+        const isImplicitTransparentDark =
+          config.colorscheme === "" && config.mode === "dark";
 
-        if (firstFullWidth && navbar && config.colorscheme === "") {
+        if (firstFullWidth && navbar && isTransparent) {
           navbar.classList.add("navbar-fw-first");
+          // If we are in dark mode with empty colorscheme, force transparent-dark styling
+          if (isImplicitTransparentDark)
+            navbar.classList.add("transparent-dark");
+          // Initial theme
+          if (config.mode === "dark" || config.colorscheme === "transparent-dark") {
+            navbar.classList.add("navbar-dark");
+            navbar.classList.remove("navbar-light");
+          } else {
+            navbar.classList.add("navbar-light");
+            navbar.classList.remove("navbar-dark");
+          }
 
           const topHeight = firstFullWidth.parentElement.parentElement.clientHeight;
+
+          const applyScrolledTheme = () => {
+            if (config.mode === "dark") {
+              navbar.classList.add("navbar-dark");
+              navbar.classList.remove("navbar-light");
+              // Keep transparent-dark class only if explicitly chosen; implicit variant can stay (harmless)
+            } else {
+              navbar.classList.add("navbar-light");
+              navbar.classList.remove("navbar-dark");
+            }
+          };
+
           const onScroll = () => {
             const y = window.scrollY || window.pageYOffset;
             if (y >= topHeight) {
               navbar.classList.add("scrolled");
+              applyScrolledTheme();
             } else {
               navbar.classList.remove("scrolled");
+              // Revert to initial transparent intent
+              if (config.mode === "dark" || config.colorscheme === "transparent-dark") {
+                navbar.classList.add("navbar-dark");
+                navbar.classList.remove("navbar-light");
+                if (isImplicitTransparentDark)
+                  navbar.classList.add("transparent-dark");
+              } else {
+                navbar.classList.add("navbar-light");
+                navbar.classList.remove("navbar-dark");
+              }
             }
           };
           window.addEventListener("scroll", onScroll, { passive: true });
           onScroll();
-        } else if (navbar && config.colorscheme === "") {
-            navbar.classList.add("scrolled");
+        } else if (navbar && isTransparent) {
+          // No full-width hero
+          navbar.classList.add("navbar-fw-first", "scrolled");
+            if (isImplicitTransparentDark)
+              navbar.classList.add("transparent-dark");
+          if (config.mode === "dark") {
+            navbar.classList.add("navbar-dark");
+            navbar.classList.remove("navbar-light");
+          } else {
+            navbar.classList.add("navbar-light");
+            navbar.classList.remove("navbar-dark");
+          }
+        } else if (firstFullWidth && navbar && !isTransparent) {
+          // Non-transparent navbar
+          const sec = firstFullWidth.parentElement.parentElement;
+          const navH = navbar.offsetHeight;
+          if (!sec.style.marginTop) sec.style.marginTop = navH + "px";
         }
 
         if (!CSS.supports("selector(:has(*))")) {
           document.querySelectorAll("section.page-section.fw-check").forEach(sec => {
             const fw = sec.querySelector(":scope > .container > .full-page-width:first-child, :scope > .container-fluid > .full-page-width:first-child");
-            if (fw) {
-              sec.classList.add("fw-no-spacing");
-              if (navbar && config.colorscheme === "") {
-                if (!navbar.classList.contains("fixed-top")) {
-                  navbar.style.position = "absolute";
-                  navbar.style.top = "0";
-                  navbar.style.left = "0";
-                  navbar.style.right = "0";
-                }
-                navbar.classList.add("navbar-fw-first");
-                navbar.style.background = "transparent";
-                navbar.style.boxShadow = "none";
+            if (fw && isTransparent && navbar) {
+              if (!navbar.classList.contains("fixed-top")) {
+                navbar.style.position = "absolute";
+                navbar.style.top = "0";
+                navbar.style.left = "0";
+                navbar.style.right = "0";
               }
+              navbar.classList.add("navbar-fw-first");
+              navbar.style.background = "transparent";
+              navbar.style.boxShadow = "none";
+            } else if (fw && !isTransparent && navbar) {
+              const navH = navbar.offsetHeight;
+              const parentSec = fw.parentElement.parentElement;
+              if (!parentSec.style.marginTop) parentSec.style.marginTop = navH + "px";
             }
           });
         }
@@ -1235,17 +1331,12 @@ const configuration_workflow = (config) =>
                     { name: "", label: "Default" },
                     { name: "navbar-dark bg-dark", label: "Dark" },
                     { name: "navbar-dark bg-primary", label: "Dark Primary" },
-                    {
-                      name: "navbar-dark bg-secondary",
-                      label: "Dark Secondary",
-                    },
+                    { name: "navbar-dark bg-secondary", label: "Dark Secondary" },
                     { name: "navbar-light bg-light", label: "Light" },
                     { name: "navbar-light bg-white", label: "White" },
                     { name: "", label: "Transparent Light" },
-                    {
-                      name: "navbar-scrolling bg-light",
-                      label: "Scrolling Light",
-                    },
+                    { name: "transparent-dark", label: "Transparent Dark" },
+                    { name: "navbar-scrolling bg-light", label: "Scrolling Light" },
                     { name: "navbar-scrolled bg-dark", label: "Scrolled Dark" },
                   ],
                 },

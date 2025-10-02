@@ -421,17 +421,17 @@ const renderBody = (title, body, alerts, config, role) =>
 
 const wrapIt = (config, bodyAttr, headers, title, body) => {
   const primary =
-    config?.mode === "light"
+    (config?.mode === "light"
       ? config?.primary_color_light
       : config?.mode === "dark"
       ? config?.primary_color_dark
-      : config?.primary_color || "#3b71ca";
+      : config?.primary_color) || "#3b71ca";
   const secondary =
-    config?.mode === "light"
+    (config?.mode === "light"
       ? config?.secondary_color_light
       : config?.mode === "dark"
       ? config?.secondary_color_dark
-      : config?.secondary_color || "#9fa6b2";
+      : config?.secondary_color) || "#9fa6b2";
   const hexToRgb = (hex) => {
     let cleanHex = hex.startsWith("#") ? hex.slice(1) : hex;
     if (cleanHex.length === 3) {

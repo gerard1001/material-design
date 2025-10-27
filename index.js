@@ -40,6 +40,7 @@ const Plugin = require("@saltcorn/data/models/plugin");
 const User = require("@saltcorn/data/models/user");
 const db = require("@saltcorn/data/db");
 const { sleep } = require("@saltcorn/data/utils");
+const { adjustColor, hexToRgb } = require("./adjust-color");
 
 const verstring = features?.version_plugin_serve_path
   ? "@" + require("./package.json").version
@@ -431,121 +432,13 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
       ? config?.secondary_color_light
       : config?.mode === "dark"
       ? config?.secondary_color_dark
-      : config?.secondary_color) || "#9fa6b2";
-  const hexToRgb = (hex) => {
-    let cleanHex = hex.startsWith("#") ? hex.slice(1) : hex;
-    if (cleanHex.length === 3) {
-      cleanHex = cleanHex
-        .split("")
-        .map((char) => char + char)
-        .join("");
-    }
-    if (cleanHex.length !== 6) {
-      throw new Error("Invalid hex color format. Expected 3 or 6 digits.");
-    }
-    const r = parseInt(cleanHex.substring(0, 2), 16);
-    const g = parseInt(cleanHex.substring(2, 4), 16);
-    const b = parseInt(cleanHex.substring(4, 6), 16);
+      : config?.secondary_color) || "#b1c6ea";
 
-    return `${r}, ${g}, ${b}`;
-  };
   const primary_rgb = hexToRgb(primary);
   const secondary_rgb = hexToRgb(secondary);
-  const adjustColor = (hex, { h = 0, s = 0, l = 0, a = 1 } = {}) => {
-    let cleanHex = hex.startsWith("#") ? hex.slice(1) : hex;
-    if (cleanHex.length === 3) {
-      cleanHex = cleanHex
-        .split("")
-        .map((c) => c + c)
-        .join("");
-    }
-
-    const num = parseInt(cleanHex, 16);
-    const r = (num >> 16) & 255;
-    const g = (num >> 8) & 255;
-    const b = num & 255;
-
-    // RGB -> HSL
-    const rNorm = r / 255,
-      gNorm = g / 255,
-      bNorm = b / 255;
-    const max = Math.max(rNorm, gNorm, bNorm);
-    const min = Math.min(rNorm, gNorm, bNorm);
-    let hVal,
-      sVal,
-      lVal = (max + min) / 2;
-
-    if (max === min) {
-      hVal = sVal = 0;
-    } else {
-      const d = max - min;
-      sVal = lVal > 0.5 ? d / (2 - max - min) : d / (max + min);
-      switch (max) {
-        case rNorm:
-          hVal = (gNorm - bNorm) / d + (gNorm < bNorm ? 6 : 0);
-          break;
-        case gNorm:
-          hVal = (bNorm - rNorm) / d + 2;
-          break;
-        case bNorm:
-          hVal = (rNorm - gNorm) / d + 4;
-          break;
-      }
-      hVal /= 6;
-    }
-
-    // Apply adjustments
-    hVal = ((hVal * 360 + h) % 360) / 360;
-    sVal = Math.min(1, Math.max(0, sVal + s / 100));
-    lVal = Math.min(1, Math.max(0, lVal + l / 100));
-
-    // HSL -> RGB
-    const hue2rgb = (p, q, t) => {
-      if (t < 0) t += 1;
-      if (t > 1) t -= 1;
-      if (t < 1 / 6) return p + (q - p) * 6 * t;
-      if (t < 1 / 2) return q;
-      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-      return p;
-    };
-
-    let rOut, gOut, bOut;
-    if (sVal === 0) {
-      rOut = gOut = bOut = lVal;
-    } else {
-      const q = lVal < 0.5 ? lVal * (1 + sVal) : lVal + sVal - lVal * sVal;
-      const p = 2 * lVal - q;
-      rOut = hue2rgb(p, q, hVal + 1 / 3);
-      gOut = hue2rgb(p, q, hVal);
-      bOut = hue2rgb(p, q, hVal - 1 / 3);
-    }
-
-    const rFinal = Math.round(rOut * 255);
-    const gFinal = Math.round(gOut * 255);
-    const bFinal = Math.round(bOut * 255);
-
-    // If alpha < 1, return rgba, else hex
-    if (a < 1) {
-      return `rgba(${rFinal}, ${gFinal}, ${bFinal}, ${a})`;
-    }
-
-    return (
-      "#" +
-      [rFinal, gFinal, bFinal]
-        .map((x) => x.toString(16).padStart(2, "0"))
-        .join("")
-    );
-  };
 
   const link_cover_color = adjustColor(primary, { l: -3 });
   const mdb_btn_color = adjustColor(primary, { l: +15 });
-  const mdb_btn_outline_focus_border_color = adjustColor(primary, { l: +25 });
-  const mdb_btn_outline_border_color = adjustColor(primary, { l: +30 });
-  const mdb_btn_hover_color = adjustColor(primary, { l: +40 });
-  const mdb_btn_hover_bg = adjustColor(primary, { l: -40 });
-  const mdb_btn_color_hue = adjustColor(primary, { h: -10, l: +10 });
-  const mdb_btn_color_secondary = adjustColor(primary, { l: -16 });
-
   return `<!doctype html>
 <html lang="en" data-bs-theme="${config.mode === "auto" ? "" : config.mode}">
   <head>
@@ -560,6 +453,8 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
     <link href="/plugins/public/material-design${verstring}/css/mdb.min.css" rel="stylesheet">
     <!-- Plugin Custom Styles -->
     <link href="/plugins/public/material-design${verstring}/css/sidenav.css" rel="stylesheet">
+    <!-- Material-design plugin overrides (ensure alternating table row colors in dark/light modes) -->
+    <link href="/plugins/public/material-design${verstring}/css/table-rows.css" rel="stylesheet">
     ${headersInHead(headers)}
     <style>
     :root,
@@ -573,7 +468,6 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
       --mdb-link-hover-color-rgb: ${link_cover_color};
       --mdb-primary-text-emphasis: ${adjustColor(primary, { l: -10 })};
       --mdb-primary-bg-subtle: ${adjustColor(primary, { l: +25 })};
-      /* --mdb-link-color: ${adjustColor(primary, { l: +50 })}; */
     }
     [data-bs-theme="dark"] {
       --mdb-primary: ${primary};
@@ -581,45 +475,15 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
       --mdb-btn-color: ${mdb_btn_color};
       --mdb-link-hover-color: ${link_cover_color};
       --mdb-link-hover-color-rgb: ${link_cover_color};
-      /* --mdb-link-color: ${adjustColor(primary, { l: +50 })}; */
       --mdb-secondary-text-emphasis: ${adjustColor(primary, { l: +65 })};
     }
-    [data-bs-theme="dark"] .btn-outline-secondary {
-      --mdb-btn-color: ${mdb_btn_color_hue};
-      --mdb-btn-hover-bg: ${adjustColor(primary, { l: 20, a: 0.1 })};
-      --mdb-btn-hover-color: ${mdb_btn_hover_color};
-      --mdb-btn-focus-bg: ${adjustColor(primary, { l: 20, a: 0.5 })};
-      --mdb-btn-focus-color: ${mdb_btn_hover_color};
-      --mdb-btn-active-bg: ${adjustColor(primary, { l: 10, a: 0.4 })};
-      --mdb-btn-active-color: ${mdb_btn_hover_color};
-      --mdb-btn-outline-border-color: ${mdb_btn_outline_border_color};
-      --mdb-btn-outline-focus-border-color: ${mdb_btn_outline_focus_border_color};
-      --mdb-btn-outline-hover-border-color: ${mdb_btn_outline_focus_border_color};
-      --mdb-btn-active-border-color: ${mdb_btn_outline_focus_border_color};
-    }
-    [data-bs-theme="light"] .btn-outline-secondary {
-      --mdb-btn-color: ${mdb_btn_color_hue};
-      --mdb-btn-hover-bg: ${adjustColor(primary, { l: 20, a: 0.1 })};
-      --mdb-btn-hover-color: ${adjustColor(primary, { l: +5 })};
-      --mdb-btn-focus-bg: ${adjustColor(primary, { l: 20, a: 0.2 })};
-      --mdb-btn-focus-color: ${mdb_btn_hover_color};
-      --mdb-btn-active-bg: ${adjustColor(primary, { l: 10, a: 0.2 })};
-      --mdb-btn-active-color: ${adjustColor(primary, { l: -5 })};
-      --mdb-btn-outline-border-color: ${mdb_btn_outline_border_color};
-      --mdb-btn-outline-focus-border-color: ${mdb_btn_outline_focus_border_color};
-      --mdb-btn-outline-hover-border-color: ${mdb_btn_outline_focus_border_color};
-    }
-    [data-bs-theme="dark"] .btn-outline-primary {
-      --mdb-btn-color: ${adjustColor(primary, { l: +15 })};
-      --mdb-btn-hover-bg: ${adjustColor(primary, { l: -50 })};
-      --mdb-btn-hover-color: ${adjustColor(primary, { l: -5 })};
-      --mdb-btn-focus-bg: ${adjustColor(primary, { l: -50 })};
-      --mdb-btn-focus-color: ${adjustColor(primary, { l: -5 })};
-      --mdb-btn-active-bg: ${adjustColor(primary, { l: -50 })};
-      --mdb-btn-active-color: ${adjustColor(primary, { l: -8 })};
+    .btn-primary {
+      --mdb-btn-hover-bg: ${link_cover_color};
+      --mdb-btn-active-bg: ${link_cover_color};
+      --mdb-btn-focus-bg: ${link_cover_color};
     }
     .btn-outline-primary {
-      --mdb-btn-hover-bg: ${adjustColor(primary, { l: +42 })};
+      --mdb-btn-hover-bg: ${adjustColor(primary, { a: 0.1 })};
       --mdb-btn-hover-color: ${adjustColor(primary, { l: -5 })};
       --mdb-btn-focus-bg: ${adjustColor(primary, { l: +42 })};  
       --mdb-btn-focus-color: ${adjustColor(primary, { l: -5 })};
@@ -628,26 +492,61 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
       --mdb-btn-outline-focus-border-color: ${adjustColor(primary, { l: -10 })};
       --mdb-btn-outline-hover-border-color: ${adjustColor(primary, { l: -10 })};
     }
-    [data-bs-theme=dark] .btn-secondary {
-      --mdb-btn-bg: ${mdb_btn_hover_color};
-      --mdb-btn-hover-bg: ${mdb_btn_outline_border_color};
-      --mdb-btn-focus-bg: ${mdb_btn_outline_border_color};
-      --mdb-btn-active-bg: ${mdb_btn_outline_border_color};
+    [data-bs-theme="dark"] .btn-outline-primary {
+      --mdb-btn-color: ${adjustColor(primary, { l: +15 })};
+      --mdb-btn-hover-bg: ${adjustColor(primary, { l: -20, a: 0.9 })};
+      --mdb-btn-hover-color: var(--mdb-btn-color);
+      --mdb-btn-focus-bg: ${adjustColor(primary, { l: -50 })};
+      --mdb-btn-focus-color: ${adjustColor(primary, { l: -5 })};
+      --mdb-btn-active-bg: ${adjustColor(primary, { l: -50 })};
+      --mdb-btn-active-color: ${adjustColor(primary, { l: -8 })};
+      --mdb-btn-outline-hover-border-color: ${primary};
     }
     .btn-secondary {
-      --mdb-btn-bg: ${mdb_btn_hover_color};
-      --mdb-btn-hover-bg: ${mdb_btn_outline_border_color};
-      --mdb-btn-focus-bg: ${mdb_btn_outline_border_color};
-      --mdb-btn-active-bg: ${mdb_btn_outline_border_color};
-      --mdb-btn-color: ${mdb_btn_color_secondary};
-      --mdb-btn-hover-color: ${mdb_btn_color_secondary};
-      --mdb-btn-focus-color: ${mdb_btn_color_secondary};
-      --mdb-btn-active-color: ${mdb_btn_color_secondary};
+      --mdb-btn-bg: ${adjustColor(secondary)};
+      --mdb-btn-hover-bg: ${adjustColor(secondary, { l: +2 })};
+      --mdb-btn-focus-bg: ${adjustColor(secondary, { l: +2 })};
+      --mdb-btn-active-bg: ${adjustColor(secondary, { l: +2 })};
+      --mdb-btn-color: ${adjustColor(secondary, { l: -50 })};
+      --mdb-btn-hover-color: ${adjustColor(secondary, { l: -40 })};
+      --mdb-btn-focus-color: ${adjustColor(secondary, { l: -40 })};
+      --mdb-btn-active-color: ${adjustColor(secondary, { l: -40 })};
     }
-    .btn-primary {
-      --mdb-btn-hover-bg: ${link_cover_color};
-      --mdb-btn-active-bg: ${link_cover_color};
-      --mdb-btn-focus-bg: ${link_cover_color};
+    [data-bs-theme=dark] .btn-secondary {
+      --mdb-btn-bg: ${adjustColor(secondary)};
+      --mdb-btn-hover-bg: ${adjustColor(secondary, { l: +5 })};
+      --mdb-btn-focus-bg: ${adjustColor(secondary, { l: +5 })};
+      --mdb-btn-active-bg: ${adjustColor(secondary, { l: +5 })};
+    }
+    [data-bs-theme="light"] .btn-outline-secondary {
+      --mdb-btn-color: ${adjustColor(secondary, { l: -20 })};
+      --mdb-btn-hover-bg: ${adjustColor(secondary, { a: 0.1 })};
+      --mdb-btn-hover-color: ${adjustColor(secondary, { l: -15 })};
+      --mdb-btn-focus-bg: ${adjustColor(secondary, { a: 0.1 })};
+      --mdb-btn-focus-color: ${adjustColor(secondary, { l: -15 })};
+      --mdb-btn-active-bg: ${adjustColor(secondary, { a: 0.1 })};
+      --mdb-btn-active-color: ${adjustColor(secondary, { l: -15 })};
+      --mdb-btn-outline-border-color: ${secondary};
+      --mdb-btn-outline-focus-border-color: ${adjustColor(secondary, {
+        l: -2,
+      })};
+      --mdb-btn-outline-hover-border-color: ${adjustColor(secondary, {
+        l: -2,
+      })};
+      --mdb-btn-active-border-color: ${adjustColor(secondary, { l: -5 })};
+    }
+    [data-bs-theme="dark"] .btn-outline-secondary {
+      --mdb-btn-color: ${secondary};
+      --mdb-btn-hover-bg: ${adjustColor(secondary, { l: -10, a: 0.1 })};
+      --mdb-btn-hover-color: ${adjustColor(secondary, { l: -2 })};
+      --mdb-btn-focus-bg: ${adjustColor(secondary, { l: -10, a: 0.1 })};
+      --mdb-btn-focus-color: ${adjustColor(secondary, { l: -2 })};
+      --mdb-btn-active-bg: ${adjustColor(secondary, { l: -10, a: 0.1 })};
+      --mdb-btn-active-color: ${adjustColor(secondary, { l: -2 })};
+      --mdb-btn-outline-border-color: ${secondary};
+      --mdb-btn-outline-focus-border-color: ${adjustColor(secondary)};
+      --mdb-btn-outline-hover-border-color: ${adjustColor(secondary)};
+      --mdb-btn-active-border-color: ${adjustColor(secondary, { l: +25 })};
     }
     .dropdown-menu.dropdown-menu-end {
       max-width: fit-content;
@@ -1420,46 +1319,32 @@ const configuration_workflow = (config) =>
                   min: 0,
                 },
               },
-              // {
-              //   name: "primary_color",
-              //   label: "Primary Color",
-              //   type: "Color",
-              //   default: "#3b71ca",
-              //   required: false,
-              // },
-              // {
-              //   name: "secondary_color",
-              //   label: "Secondary Color",
-              //   type: "Color",
-              //   default: "#9fa6b2",
-              //   required: false,
-              // },
               {
                 name: "primary_color_light",
-                label: "Primary Color (Light Mode)",
+                label: "Primary Color </br>(Light Mode)",
                 type: "Color",
                 default: "#3b71ca",
                 required: false,
               },
               {
                 name: "secondary_color_light",
-                label: "Secondary Color (Light Mode)",
+                label: "Secondary Color </br>(Light Mode)",
                 type: "Color",
-                default: "#9fa6b2",
+                default: "#b1c6ea",
                 required: false,
               },
               {
                 name: "primary_color_dark",
-                label: "Primary Color (Dark Mode)",
+                label: "Primary Color </br>(Dark Mode)",
                 type: "Color",
                 default: "#3b71ca",
                 required: false,
               },
               {
                 name: "secondary_color_dark",
-                label: "Secondary Color (Dark Mode)",
+                label: "Secondary Color </br>(Dark Mode)",
                 type: "Color",
-                default: "#9fa6b2",
+                default: "#b1c6ea",
                 required: false,
               },
             ],

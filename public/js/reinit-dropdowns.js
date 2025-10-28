@@ -68,4 +68,16 @@
   } catch (e) {
     console.error(e);
   }
+
+  // jQuery AJAX hook (if present)
+  if (
+    window.jQuery &&
+    window.jQuery(document) &&
+    window.jQuery(document).ajaxComplete
+  ) {
+    window.jQuery(document).ajaxComplete(function () {
+      markAndInitDropdowns(document);
+      if (window.reinitDropdowns) window.reinitDropdowns(document);
+    });
+  }
 })();

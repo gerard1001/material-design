@@ -773,6 +773,7 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
     <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/popper.min.js"></script>
     <!-- MDB core JavaScript -->
     <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/mdb.min.js"></script>
+    <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/reinit-dropdowns.js"></script>
     <!-- Bind window.mdb to window.bootstrap for backward compatibility -->
     <script>
       window.bootstrap = window.mdb;

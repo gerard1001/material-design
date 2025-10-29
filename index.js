@@ -22,6 +22,7 @@ const {
   form,
   input,
   section,
+  style,
 } = require("@saltcorn/markup/tags");
 const {
   navbar,

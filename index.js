@@ -1388,6 +1388,7 @@ module.exports = {
         userLayout.config.is_user_config = true;
         attrs.layout = userLayout;
         await dbUser.update({ _attributes: attrs });
+        await db.commitAndBeginNewTransaction?.();
         getState().processSend({
           refresh_plugin_cfg: plugin.name,
           tenant: db.getTenantSchema(),

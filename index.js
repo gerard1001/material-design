@@ -1393,10 +1393,6 @@ module.exports = {
           refresh_plugin_cfg: plugin.name,
           tenant: db.getTenantSchema(),
         });
-        getState().userLayouts[user.email] = layout({
-          ...(plugin.configuration ? plugin.configuration : {}),
-          ...userLayout.config,
-        });
         await sleep(500);
         return { reload_page: true };
       },

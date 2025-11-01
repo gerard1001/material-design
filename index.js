@@ -69,13 +69,21 @@ const horizontalLineItem = (classes = []) =>
     hr({ class: ["hr my-1"] })
   );
 
-const horizontalSubItem = (currentUrl) => (item) =>
+const horizontalSubItem = (currentUrl, config) => (item) =>
   li(
     item.link
       ? a(
           {
             class: ["dropdown-item", active(currentUrl, item) && "active"],
             href: text(item.link),
+            ...(item.tooltip
+              ? {
+                  "data-mdb-placement":
+                    config?.layout_style === "Vertical" ? "right" : "bottom",
+                  "data-bs-toggle": "tooltip",
+                  title: item.tooltip,
+                }
+              : {}),
           },
           item.icon && item.icon !== "empty" && item.icon !== "undefined"
             ? i({
@@ -93,6 +101,42 @@ const verticalSubItem =
   (item, ix) => {
     const is_active = active(currentUrl, item);
     const itemId = parentPath ? `${parentPath}_${ix}` : `subitem_${ix}`;
+    li(
+      { class: ["nav-item"] },
+      item.link
+        ? a(
+            {
+              class: [
+                "nav-link m-0 rounded-0 ripple",
+                active(currentUrl, item) && "active",
+              ],
+              href: text(item.link),
+              ...(item.tooltip
+                ? {
+                    "data-mdb-placement": "right",
+                    "data-bs-toggle": "tooltip",
+                    title: item.tooltip,
+                  }
+                : {}),
+            },
+            item.icon && item.icon !== "empty" && item.icon !== "undefined"
+              ? i({
+                  class: `me-2 fa-fw ${item.icon} object-fit-contain`,
+                  style: "width: 16px; height: 16px;",
+                })
+              : "",
+            item.label
+          )
+        : span(
+            {
+              class: [
+                "nav-link m-0 rounded-0",
+                active(currentUrl, item) && "active",
+              ],
+            },
+            text(item.label)
+          )
+    );
 
     return li(
       { class: ["nav-item"] },
@@ -200,7 +244,7 @@ const verticalSideBarItem =
           {
             class: ["dropdown-menu", ix === nitems - 1 && "dropdown-menu-end"],
           },
-          item.subitems.map(horizontalSubItem(currentUrl))
+          item.subitems.map(horizontalSubItem(currentUrl, config))
         )
       );
     } else if (item.isUser && user?.email) {
@@ -215,6 +259,7 @@ const verticalSideBarItem =
             "data-bs-toggle": "dropdown",
             role: "button",
             "aria-expanded": "false",
+            title: item?.tooltip,
           },
           div(
             {
@@ -229,7 +274,7 @@ const verticalSideBarItem =
           {
             class: ["dropdown-menu", ix === nitems - 1 && "dropdown-menu-end"],
           },
-          item.subitems.map(horizontalSubItem(currentUrl))
+          item.subitems.map(horizontalSubItem(currentUrl, config))
         )
       );
     }
@@ -277,6 +322,7 @@ const verticalSideBarItem =
                   "data-bs-toggle": "collapse",
                   "aria-expanded": is_active ? "true" : "false",
                   "aria-controls": "collapse_item_" + ix,
+                  title: item?.tooltip,
                 },
                 item.icon && item.icon !== "empty" && item.icon !== "undefined"
                   ? span(
@@ -318,6 +364,13 @@ const verticalSideBarItem =
                 ],
                 href: text(item.link),
                 ...(is_active && { "aria-current": "page" }),
+                ...(item.tooltip
+                  ? {
+                      "data-mdb-placement": "right",
+                      "data-bs-toggle": "tooltip",
+                      title: item.tooltip,
+                    }
+                  : {}),
               },
               item.icon && item.icon !== "empty" && item.icon !== "undefined"
                 ? span(

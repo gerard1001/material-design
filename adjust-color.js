@@ -1,4 +1,4 @@
-export const adjustColor = (hex, { h = 0, s = 0, l = 0, a = 1 } = {}) => {
+const adjustColor = (hex, { h = 0, s = 0, l = 0, a = 1 } = {}) => {
   let cleanHex = hex.startsWith("#") ? hex.slice(1) : hex;
   if (cleanHex.length === 3) {
     cleanHex = cleanHex
@@ -84,7 +84,7 @@ export const adjustColor = (hex, { h = 0, s = 0, l = 0, a = 1 } = {}) => {
   );
 };
 
-export const hexToRgb = (hex) => {
+const hexToRgb = (hex) => {
   let cleanHex = hex.startsWith("#") ? hex.slice(1) : hex;
   if (cleanHex.length === 3) {
     cleanHex = cleanHex
@@ -101,3 +101,5 @@ export const hexToRgb = (hex) => {
 
   return `${r}, ${g}, ${b}`;
 };
+
+module.exports = { hexToRgb, adjustColor };

@@ -1390,12 +1390,7 @@ module.exports = {
         await dbUser.update({ _attributes: attrs });
         await db.commitAndBeginNewTransaction?.();
         await getState().refreshUserLayouts?.();
-        getState().processSend({
-          refresh_plugin_cfg: plugin.name,
-          tenant: db.getTenantSchema(),
-        });
         await dbUser.relogin(req);
-        await sleep(500);
         return { reload_page: true };
       },
     },

@@ -52,15 +52,16 @@ const _activeChecker = activeChecker
   ? activeChecker
   : (link, currentUrl) => new RegExp(`^${link}(\\/|\\?|#|$)`).test(currentUrl);
 
-const active = (currentUrl, item) =>
-  (item.link && _activeChecker(item.link, currentUrl)) ||
-  (item.altlinks && item.altlinks.some((l) => _activeChecker(l, currentUrl))) ||
-  (item.subitems &&
-    item.subitems.some(
-      (si) =>
-        (si.link && _activeChecker(si.link, currentUrl)) ||
-        (si.altlinks && si.altlinks.some((l) => _activeChecker(l, currentUrl)))
-    ));
+// Recursively check if item or any nested subitem is active
+const active = (currentUrl, item) => {
+  if (item.link && _activeChecker(item.link, currentUrl)) return true;
+  if (item.altlinks && item.altlinks.some((l) => _activeChecker(l, currentUrl)))
+    return true;
+  if (item.subitems && item.subitems.length > 0) {
+    return item.subitems.some((si) => active(currentUrl, si));
+  }
+  return false;
+};
 
 const horizontalLineItem = (classes = []) =>
   div(
@@ -87,37 +88,85 @@ const horizontalSubItem = (currentUrl) => (item) =>
       : span({ class: "dropdown-header" }, item.label)
   );
 
-const verticalSubItem = (currentUrl) => (item) =>
-  li(
-    { class: ["nav-item"] },
-    item.link
-      ? a(
-          {
-            class: [
-              "nav-link m-0 rounded-0 ripple",
-              active(currentUrl, item) && "active",
-            ],
-            href: text(item.link),
-          },
-          item.icon && item.icon !== "empty" && item.icon !== "undefined"
-            ? i({
-                class: `me-2 fa-fw ${item.icon} object-fit-contain`,
-                style: "width: 16px; height: 16px;",
-              })
-            : "",
-          item.label
-        )
-      : span(
-          {
-            class: [
-              "nav-link m-0 rounded-0",
-              active(currentUrl, item) && "active",
-            ],
-          },
-          text(item.label)
-        )
-  );
+const verticalSubItem =
+  (currentUrl, parentPath = "") =>
+  (item, ix) => {
+    const is_active = active(currentUrl, item);
+    const itemId = parentPath ? `${parentPath}_${ix}` : `subitem_${ix}`;
 
+    return li(
+      { class: ["nav-item"] },
+      item.subitems
+        ? [
+            a(
+              {
+                class: [
+                  "nav-link d-flex align-items-center ripple",
+                  is_active && "active",
+                ],
+                href: "#collapse_" + itemId,
+                role: "button",
+                "data-bs-toggle": "collapse",
+                "aria-expanded": is_active ? "true" : "false",
+                "aria-controls": "collapse_" + itemId,
+              },
+              item.icon && item.icon !== "empty" && item.icon !== "undefined"
+                ? span(
+                    { class: "me-2" },
+                    i({
+                      class: `fa-fw ${item.icon} object-fit-contain`,
+                      style: "width: 16px; height: 16px;",
+                    })
+                  )
+                : "",
+              item.label,
+              span(
+                {
+                  class: "ms-auto",
+                },
+                i({
+                  class: "sidenav-collapse-icon fas fa-chevron-down fa-sm",
+                })
+              )
+            ),
+            div(
+              {
+                class: ["collapse", is_active && "show"],
+                id: "collapse_" + itemId,
+                "data-mdb-collapse-initialized": "true",
+                "data-bs-collapse-initialized": "true",
+              },
+              ul(
+                {
+                  class: "nav w-100 d-flex flex-column",
+                  style: "padding-left: 1rem;",
+                },
+                item.subitems.map(verticalSubItem(currentUrl, itemId))
+              )
+            ),
+          ]
+        : item.link
+        ? a(
+            {
+              class: ["nav-link ripple", active(currentUrl, item) && "active"],
+              href: text(item.link),
+            },
+            item.icon && item.icon !== "empty" && item.icon !== "undefined"
+              ? i({
+                  class: `me-2 fa-fw ${item.icon} object-fit-contain`,
+                  style: "width: 16px; height: 16px;",
+                })
+              : "",
+            item.label
+          )
+        : span(
+            {
+              class: ["nav-link m-0", active(currentUrl, item) && "active"],
+            },
+            text(item.label)
+          )
+    );
+  };
 const verticalSideBarItem =
   (currentUrl, config, user, nitems) => (item, ix) => {
     const is_active = active(currentUrl, item);
@@ -219,14 +268,16 @@ const verticalSideBarItem =
           ? [
               a(
                 {
-                  class: ["nav-link m-0 d-flex align-items-center ripple"],
+                  class: [
+                    "nav-link d-flex align-items-center ripple",
+                    is_active && "active",
+                  ],
                   href: "#collapse_item_" + ix,
                   role: "button",
                   "data-bs-toggle": "collapse",
-                  "aria-expanded": "false",
+                  "aria-expanded": is_active ? "true" : "false",
                   "aria-controls": "collapse_item_" + ix,
                 },
-                //i({ class: "fas fa-fw fa-wrench" }),
                 item.icon && item.icon !== "empty" && item.icon !== "undefined"
                   ? span(
                       { class: "me-2" },
@@ -251,7 +302,7 @@ const verticalSideBarItem =
                 },
                 ul(
                   { class: "nav w-100 d-flex flex-column" },
-                  item.subitems.map(verticalSubItem(currentUrl))
+                  item.subitems.map(verticalSubItem(currentUrl, `item_${ix}`))
                 )
               ),
             ]
@@ -261,7 +312,7 @@ const verticalSideBarItem =
                   item.style && item.style.includes("btn")
                     ? "ms-2"
                     : "nav-link",
-                  "m-0 ripple",
+                  "ripple",
                   item.style || "",
                   is_active && "active",
                 ],
@@ -273,7 +324,7 @@ const verticalSideBarItem =
                     { class: "me-2" },
                     i({
                       class: `fa-fw ${item.icon} object-fit-contain`,
-                      styyle: "width: 16px; height: 16px;",
+                      style: "width: 16px; height: 16px;",
                     })
                   )
                 : "",
@@ -410,10 +461,11 @@ const blockDispatch = (config) => ({
         ),
 });
 
-const renderBody = (title, body, alerts, config, role) =>
+const renderBody = (title, body, alerts, config, role, req) =>
   renderLayout({
     blockDispatch: blockDispatch(config),
     role,
+    req,
     layout:
       typeof body === "string" && config.in_card
         ? { type: "card", title, contents: body }
@@ -1060,15 +1112,15 @@ const layout = (config) => ({
         <div class="${config.fluid ? "container-fluid" : "container-xl"}">
           <div class="row">
             <div class="col-sm-12" id="page-inner-content">
-              ${renderBody(title, body, alerts, config, role)}
+              ${renderBody(title, body, alerts, config, role, req)}
             </div>
           </div>
         </div>
     </div>
     `
     ),
-  renderBody: ({ title, body, alerts, role }) =>
-    renderBody(title, body, alerts, config, role),
+  renderBody: ({ title, body, alerts, role, req }) =>
+    renderBody(title, body, alerts, config, role, req),
   authWrap: ({
     title,
     alerts, //TODO

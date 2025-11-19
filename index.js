@@ -461,10 +461,11 @@ const blockDispatch = (config) => ({
         ),
 });
 
-const renderBody = (title, body, alerts, config, role) =>
+const renderBody = (title, body, alerts, config, role, req) =>
   renderLayout({
     blockDispatch: blockDispatch(config),
     role,
+    req,
     layout:
       typeof body === "string" && config.in_card
         ? { type: "card", title, contents: body }
@@ -1111,15 +1112,15 @@ const layout = (config) => ({
         <div class="${config.fluid ? "container-fluid" : "container-xl"}">
           <div class="row">
             <div class="col-sm-12" id="page-inner-content">
-              ${renderBody(title, body, alerts, config, role)}
+              ${renderBody(title, body, alerts, config, role, req)}
             </div>
           </div>
         </div>
     </div>
     `
     ),
-  renderBody: ({ title, body, alerts, role }) =>
-    renderBody(title, body, alerts, config, role),
+  renderBody: ({ title, body, alerts, role, req }) =>
+    renderBody(title, body, alerts, config, role, req),
   authWrap: ({
     title,
     alerts, //TODO

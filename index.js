@@ -546,7 +546,7 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
   const link_cover_color = adjustColor(primary, { l: -3 });
   const mdb_btn_color = adjustColor(primary, { l: +15 });
   return `<!doctype html>
-<html lang="en" data-bs-theme="${config.mode === "auto" ? "" : config.mode}">
+<html lang="en" data-bs-theme="${config.mode || "light"}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -886,57 +886,23 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
       config = ${JSON.stringify(config || {})};
       const navbar = document.querySelector(".navbar");
 
-      (function() {
-        // use the system preference when config.mode === 'auto'
-        const usesDark = window.matchMedia("(prefers-color-scheme: dark)");
-        const getEffectiveMode = () =>
-          config.mode === "auto" ? (usesDark.matches ? "dark" : "light") : config.mode;
-
-        const applyEffectiveMode = () => {
-          const mode = getEffectiveMode();
-          try {
-            document.documentElement.setAttribute("data-bs-theme", mode);
-          } catch (e) {}
-          if (mode === "dark") document.body.classList.add("bg-dark");
-          else document.body.classList.remove("bg-dark");
-
-          if (navbar) {
-            if (mode === "dark") {
-              navbar.classList.add("navbar-dark");
-              navbar.classList.remove("navbar-light");
-            } else {
-              navbar.classList.add("navbar-light");
-              navbar.classList.remove("navbar-dark");
-            }
-          }
-        };
-
-        applyEffectiveMode();
-        // Live update if system preference changes and plugin set to auto
-        if (config.mode === "auto") {
-          if (usesDark.addEventListener)
-            usesDark.addEventListener("change", applyEffectiveMode);
-          else if (usesDark.addListener)
-            usesDark.addListener(applyEffectiveMode);
-        }
-
+      (function () {
         const firstFullWidth = document.querySelector(
           "section.page-section.fw-check > .container > .full-page-width:first-child, \
-           section.page-section.fw-check > .container-fluid > .full-page-width:first-child"
+                section.page-section.fw-check > .container-fluid > .full-page-width:first-child"
         );
         const isTransparent =
           config.colorscheme === "" || config.colorscheme === "transparent-dark";
         const isImplicitTransparentDark =
-          config.colorscheme === "" && getEffectiveMode() === "dark";
+          config.colorscheme === "" && config.mode === "dark";
 
         if (firstFullWidth && navbar && isTransparent) {
           navbar.classList.add("navbar-fw-first");
           // If we are in dark mode with empty colorscheme, force transparent-dark styling
           if (isImplicitTransparentDark) navbar.classList.add("transparent-dark");
 
-          const effective = getEffectiveMode();
           // Initial theme
-          if (effective === "dark" || config.colorscheme === "transparent-dark") {
+          if (config.mode === "dark" || config.colorscheme === "transparent-dark") {
             navbar.classList.add("navbar-dark");
             navbar.classList.remove("navbar-light");
           } else {
@@ -947,8 +913,7 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
           const topHeight = firstFullWidth.parentElement.parentElement.clientHeight;
 
           const applyScrolledTheme = () => {
-            const eff = getEffectiveMode();
-            if (eff === "dark") {
+            if (config.mode === "dark") {
               navbar.classList.add("navbar-dark");
               navbar.classList.remove("navbar-light");
               // Keep transparent-dark class only if explicitly chosen; implicit variant can stay (harmless)
@@ -966,11 +931,14 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
             } else {
               navbar.classList.remove("scrolled");
               // Revert to initial transparent intent
-              const eff = getEffectiveMode();
-              if (eff === "dark" || config.colorscheme === "transparent-dark") {
+              if (
+                config.mode === "dark" ||
+                config.colorscheme === "transparent-dark"
+              ) {
                 navbar.classList.add("navbar-dark");
                 navbar.classList.remove("navbar-light");
-                if (isImplicitTransparentDark) navbar.classList.add("transparent-dark");
+                if (isImplicitTransparentDark)
+                  navbar.classList.add("transparent-dark");
               } else {
                 navbar.classList.add("navbar-light");
                 navbar.classList.remove("navbar-dark");
@@ -983,7 +951,7 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
           // No full-width hero
           navbar.classList.add("navbar-fw-first", "scrolled");
           if (isImplicitTransparentDark) navbar.classList.add("transparent-dark");
-          if (getEffectiveMode() === "dark") {
+          if (config.mode === "dark") {
             navbar.classList.add("navbar-dark");
             navbar.classList.remove("navbar-light");
           } else {
@@ -998,24 +966,29 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
         }
 
         if (!CSS.supports("selector(:has(*))")) {
-          document.querySelectorAll("section.page-section.fw-check").forEach((sec) => {
-            const fw = sec.querySelector(":scope > .container > .full-page-width:first-child, :scope > .container-fluid > .full-page-width:first-child");
-            if (fw && isTransparent && navbar) {
-              if (!navbar.classList.contains("fixed-top")) {
-                navbar.style.position = "absolute";
-                navbar.style.top = "0";
-                navbar.style.left = "0";
-                navbar.style.right = "0";
+          document
+            .querySelectorAll("section.page-section.fw-check")
+            .forEach((sec) => {
+              const fw = sec.querySelector(
+                ":scope > .container > .full-page-width:first-child, :scope > .container-fluid > .full-page-width:first-child"
+              );
+              if (fw && isTransparent && navbar) {
+                if (!navbar.classList.contains("fixed-top")) {
+                  navbar.style.position = "absolute";
+                  navbar.style.top = "0";
+                  navbar.style.left = "0";
+                  navbar.style.right = "0";
+                }
+                navbar.classList.add("navbar-fw-first");
+                navbar.style.background = "transparent";
+                navbar.style.boxShadow = "none";
+              } else if (fw && !isTransparent && navbar) {
+                const navH = navbar.offsetHeight;
+                const parentSec = fw.parentElement.parentElement;
+                if (!parentSec.style.marginTop)
+                  parentSec.style.marginTop = navH + "px";
               }
-              navbar.classList.add("navbar-fw-first");
-              navbar.style.background = "transparent";
-              navbar.style.boxShadow = "none";
-            } else if (fw && !isTransparent && navbar) {
-              const navH = navbar.offsetHeight;
-              const parentSec = fw.parentElement.parentElement;
-              if (!parentSec.style.marginTop) parentSec.style.marginTop = navH + "px";
-            }
-          });
+            });
         }
       })();
     </script>
@@ -1328,7 +1301,6 @@ const user_config_form = (ctx) => {
           options: [
             { name: "light", label: "Light" },
             { name: "dark", label: "Dark" },
-            { name: "auto", label: "Auto" },
           ],
         },
       },
@@ -1434,7 +1406,6 @@ const configuration_workflow = (config) =>
                   options: [
                     { name: "light", label: "Light" },
                     { name: "dark", label: "Dark" },
-                    { name: "auto", label: "Auto" },
                   ],
                 },
               },

@@ -69,13 +69,21 @@ const horizontalLineItem = (classes = []) =>
     hr({ class: ["hr my-1"] })
   );
 
-const horizontalSubItem = (currentUrl) => (item) =>
+const horizontalSubItem = (currentUrl, config) => (item) =>
   li(
     item.link
       ? a(
           {
             class: ["dropdown-item", active(currentUrl, item) && "active"],
             href: text(item.link),
+            ...(item.tooltip
+              ? {
+                  "data-mdb-placement":
+                    config?.layout_style === "Vertical" ? "right" : "bottom",
+                  "data-bs-toggle": "tooltip",
+                  title: item.tooltip,
+                }
+              : {}),
           },
           item.icon && item.icon !== "empty" && item.icon !== "undefined"
             ? i({
@@ -93,6 +101,42 @@ const verticalSubItem =
   (item, ix) => {
     const is_active = active(currentUrl, item);
     const itemId = parentPath ? `${parentPath}_${ix}` : `subitem_${ix}`;
+    li(
+      { class: ["nav-item"] },
+      item.link
+        ? a(
+            {
+              class: [
+                "nav-link m-0 rounded-0 ripple",
+                active(currentUrl, item) && "active",
+              ],
+              href: text(item.link),
+              ...(item.tooltip
+                ? {
+                    "data-mdb-placement": "right",
+                    "data-bs-toggle": "tooltip",
+                    title: item.tooltip,
+                  }
+                : {}),
+            },
+            item.icon && item.icon !== "empty" && item.icon !== "undefined"
+              ? i({
+                  class: `me-2 fa-fw ${item.icon} object-fit-contain`,
+                  style: "width: 16px; height: 16px;",
+                })
+              : "",
+            item.label
+          )
+        : span(
+            {
+              class: [
+                "nav-link m-0 rounded-0",
+                active(currentUrl, item) && "active",
+              ],
+            },
+            text(item.label)
+          )
+    );
 
     return li(
       { class: ["nav-item"] },
@@ -200,7 +244,7 @@ const verticalSideBarItem =
           {
             class: ["dropdown-menu", ix === nitems - 1 && "dropdown-menu-end"],
           },
-          item.subitems.map(horizontalSubItem(currentUrl))
+          item.subitems.map(horizontalSubItem(currentUrl, config))
         )
       );
     } else if (item.isUser && user?.email) {
@@ -215,6 +259,7 @@ const verticalSideBarItem =
             "data-bs-toggle": "dropdown",
             role: "button",
             "aria-expanded": "false",
+            title: item?.tooltip,
           },
           div(
             {
@@ -229,7 +274,7 @@ const verticalSideBarItem =
           {
             class: ["dropdown-menu", ix === nitems - 1 && "dropdown-menu-end"],
           },
-          item.subitems.map(horizontalSubItem(currentUrl))
+          item.subitems.map(horizontalSubItem(currentUrl, config))
         )
       );
     }
@@ -277,6 +322,7 @@ const verticalSideBarItem =
                   "data-bs-toggle": "collapse",
                   "aria-expanded": is_active ? "true" : "false",
                   "aria-controls": "collapse_item_" + ix,
+                  title: item?.tooltip,
                 },
                 item.icon && item.icon !== "empty" && item.icon !== "undefined"
                   ? span(
@@ -318,6 +364,13 @@ const verticalSideBarItem =
                 ],
                 href: text(item.link),
                 ...(is_active && { "aria-current": "page" }),
+                ...(item.tooltip
+                  ? {
+                      "data-mdb-placement": "right",
+                      "data-bs-toggle": "tooltip",
+                      title: item.tooltip,
+                    }
+                  : {}),
               },
               item.icon && item.icon !== "empty" && item.icon !== "undefined"
                 ? span(
@@ -493,7 +546,7 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
   const link_cover_color = adjustColor(primary, { l: -3 });
   const mdb_btn_color = adjustColor(primary, { l: +15 });
   return `<!doctype html>
-<html lang="en" data-bs-theme="${config.mode === "auto" ? "" : config.mode}">
+<html lang="en" data-bs-theme="${config.mode || "light"}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -833,10 +886,10 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
       config = ${JSON.stringify(config || {})};
       const navbar = document.querySelector(".navbar");
 
-      (function() {
+      (function () {
         const firstFullWidth = document.querySelector(
           "section.page-section.fw-check > .container > .full-page-width:first-child, \
-           section.page-section.fw-check > .container-fluid > .full-page-width:first-child"
+                section.page-section.fw-check > .container-fluid > .full-page-width:first-child"
         );
         const isTransparent =
           config.colorscheme === "" || config.colorscheme === "transparent-dark";
@@ -846,8 +899,8 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
         if (firstFullWidth && navbar && isTransparent) {
           navbar.classList.add("navbar-fw-first");
           // If we are in dark mode with empty colorscheme, force transparent-dark styling
-          if (isImplicitTransparentDark)
-            navbar.classList.add("transparent-dark");
+          if (isImplicitTransparentDark) navbar.classList.add("transparent-dark");
+
           // Initial theme
           if (config.mode === "dark" || config.colorscheme === "transparent-dark") {
             navbar.classList.add("navbar-dark");
@@ -878,7 +931,10 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
             } else {
               navbar.classList.remove("scrolled");
               // Revert to initial transparent intent
-              if (config.mode === "dark" || config.colorscheme === "transparent-dark") {
+              if (
+                config.mode === "dark" ||
+                config.colorscheme === "transparent-dark"
+              ) {
                 navbar.classList.add("navbar-dark");
                 navbar.classList.remove("navbar-light");
                 if (isImplicitTransparentDark)
@@ -894,8 +950,7 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
         } else if (navbar && isTransparent) {
           // No full-width hero
           navbar.classList.add("navbar-fw-first", "scrolled");
-            if (isImplicitTransparentDark)
-              navbar.classList.add("transparent-dark");
+          if (isImplicitTransparentDark) navbar.classList.add("transparent-dark");
           if (config.mode === "dark") {
             navbar.classList.add("navbar-dark");
             navbar.classList.remove("navbar-light");
@@ -911,24 +966,29 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
         }
 
         if (!CSS.supports("selector(:has(*))")) {
-          document.querySelectorAll("section.page-section.fw-check").forEach(sec => {
-            const fw = sec.querySelector(":scope > .container > .full-page-width:first-child, :scope > .container-fluid > .full-page-width:first-child");
-            if (fw && isTransparent && navbar) {
-              if (!navbar.classList.contains("fixed-top")) {
-                navbar.style.position = "absolute";
-                navbar.style.top = "0";
-                navbar.style.left = "0";
-                navbar.style.right = "0";
+          document
+            .querySelectorAll("section.page-section.fw-check")
+            .forEach((sec) => {
+              const fw = sec.querySelector(
+                ":scope > .container > .full-page-width:first-child, :scope > .container-fluid > .full-page-width:first-child"
+              );
+              if (fw && isTransparent && navbar) {
+                if (!navbar.classList.contains("fixed-top")) {
+                  navbar.style.position = "absolute";
+                  navbar.style.top = "0";
+                  navbar.style.left = "0";
+                  navbar.style.right = "0";
+                }
+                navbar.classList.add("navbar-fw-first");
+                navbar.style.background = "transparent";
+                navbar.style.boxShadow = "none";
+              } else if (fw && !isTransparent && navbar) {
+                const navH = navbar.offsetHeight;
+                const parentSec = fw.parentElement.parentElement;
+                if (!parentSec.style.marginTop)
+                  parentSec.style.marginTop = navH + "px";
               }
-              navbar.classList.add("navbar-fw-first");
-              navbar.style.background = "transparent";
-              navbar.style.boxShadow = "none";
-            } else if (fw && !isTransparent && navbar) {
-              const navH = navbar.offsetHeight;
-              const parentSec = fw.parentElement.parentElement;
-              if (!parentSec.style.marginTop) parentSec.style.marginTop = navH + "px";
-            }
-          });
+            });
         }
       })();
     </script>
@@ -1241,7 +1301,6 @@ const user_config_form = (ctx) => {
           options: [
             { name: "light", label: "Light" },
             { name: "dark", label: "Dark" },
-            { name: "auto", label: "Auto" },
           ],
         },
       },
@@ -1347,7 +1406,6 @@ const configuration_workflow = (config) =>
                   options: [
                     { name: "light", label: "Light" },
                     { name: "dark", label: "Dark" },
-                    { name: "auto", label: "Auto" },
                   ],
                 },
               },

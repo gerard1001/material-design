@@ -194,6 +194,9 @@ const verticalSubItem =
             {
               class: ["nav-link ripple", active(currentUrl, item) && "active"],
               href: text(item.link),
+              "data-mdb-placement": "right",
+              "data-bs-toggle": "tooltip",
+              title: item.tooltip,
             },
             item.icon && item.icon !== "empty" && item.icon !== "undefined"
               ? i({
@@ -993,6 +996,61 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
       })();
     </script>
     <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/mdb-jquery-bridge.js"></script>
+    <script>
+      // Enable hover for nested dropdowns in horizontal navbar
+      (function () {
+        const navbarDropdowns = document.querySelectorAll(
+          ".navbar .hover-dropdown-item"
+        );
+
+        navbarDropdowns.forEach(function (dropdownItem) {
+          let hoverTimer;
+          const dropdownMenu = dropdownItem.querySelector(".hover-dropdown-menu");
+          const dropdownToggle = dropdownItem.querySelector(
+            '[data-bs-toggle="dropdown"]'
+          );
+
+          if (!dropdownMenu || !dropdownToggle) return;
+
+          // Show on hover
+          dropdownItem.addEventListener("mouseenter", function () {
+            clearTimeout(hoverTimer);
+            hoverTimer = setTimeout(function () {
+              const bsDropdown =
+                window.mdb.Dropdown.getInstance(dropdownToggle) ||
+                new window.mdb.Dropdown(dropdownToggle);
+              bsDropdown.show();
+            }, 100);
+          });
+
+          // Hide on mouse leave
+          dropdownItem.addEventListener("mouseleave", function () {
+            clearTimeout(hoverTimer);
+            hoverTimer = setTimeout(function () {
+              const bsDropdown = window.mdb.Dropdown.getInstance(dropdownToggle);
+              if (bsDropdown) {
+                bsDropdown.hide();
+              }
+            }, 200);
+          });
+
+          // Keep open when hovering over the menu itself
+          dropdownMenu.addEventListener("mouseenter", function () {
+            clearTimeout(hoverTimer);
+          });
+
+          dropdownMenu.addEventListener("mouseleave", function () {
+            clearTimeout(hoverTimer);
+            hoverTimer = setTimeout(function () {
+              const bsDropdown = window.mdb.Dropdown.getInstance(dropdownToggle);
+              if (bsDropdown) {
+                bsDropdown.hide();
+              }
+            }, 200);
+          });
+        });
+      })();
+    </script>
 
     ${headersInBody(headers)}
     ${config.colorscheme === "navbar-light" ? navbarSolidOnScroll : ""}
@@ -1016,7 +1074,15 @@ const header_sections = (brand, sections, currentUrl, config, user, title) => {
       );
 
     default: //Horizontal
-      return navbar(brand, sections, currentUrl, config);
+      return horizontal_header_sections(
+        brand,
+        primary,
+        secondary,
+        currentUrl,
+        config,
+        user,
+        title
+      );
   }
 };
 
@@ -1282,6 +1348,263 @@ const renderAuthLinks = (authLinks) => {
     meth_links + links.map((l) => div({ class: "text-center" }, l)).join("")
   );
 };
+
+const horizontal_header_sections = (
+  brand,
+  primary,
+  secondary,
+  currentUrl,
+  config,
+  user,
+  title
+) => {
+  const renderNestedDropdown = (item, parentId, subIx) => {
+    if (!item.subitems || !item.subitems.length) {
+      return a(
+        {
+          class: "dropdown-item",
+          href: text(item.link || "#"),
+          ...(item.tooltip
+            ? {
+                "data-bs-toggle": "tooltip",
+                "data-bs-placement": "left",
+                "data-mdb-placement": "left",
+                "data-mdb-original-title": item.tooltip,
+                "data-bs-original-title": item.tooltip,
+                "data-mdb-tooltip-initialized": "true",
+                "data-bs-tooltip-initialized": "true",
+              }
+            : {}),
+        },
+        item.icon &&
+          item.icon !== "empty" &&
+          item.icon !== "undefined" &&
+          i({ class: `fa-fw mr-05 ${item.icon}` }),
+        item.label
+      );
+    }
+    return div(
+      {
+        class: "dropdown-item dropstart hover-dropdown-item",
+      },
+      a(
+        {
+          type: "button",
+          class: "dropdown-item dropdown-toggle p-0",
+          "data-bs-toggle": "dropdown",
+          "aria-expanded": "false",
+          "data-mdb-dropdown-initialized": "true",
+          "data-bs-dropdown-initialized": "true",
+        },
+        item.label
+      ),
+      ul(
+        { class: "dropdown-menu hover-dropdown-menu" },
+        item.subitems.map((subitem, subsubIx) =>
+          li(renderNestedDropdown(subitem, `${parentId}_${subIx}`, subsubIx))
+        )
+      )
+    );
+  };
+
+  return nav(
+    {
+      class: [
+        "navbar d-print-none navbar-expand-md",
+        config?.colorscheme && config.colorscheme.toLowerCase(),
+      ],
+      id: "mainNav",
+      ...(config?.colorscheme?.includes("navbar-dark") && {
+        "data-bs-theme": "dark",
+      }),
+      ...(config?.colorscheme?.includes("navbar-light") && {
+        "data-bs-theme": "light",
+      }),
+    },
+    div(
+      { class: "container" },
+      brand &&
+        a(
+          { class: "navbar-brand js-scroll-trigger", href: "/" },
+          brand.logo
+            ? img({
+                src: brand.logo,
+                alt: "Logo",
+                class: "navbar-brand-image mx-1",
+              })
+            : "",
+          (!config?.hide_site_name || !brand.logo) && brand.name
+        ),
+      button(
+        {
+          class: "navbar-toggler navbar-toggler-right collapsed",
+          type: "button",
+          "data-bs-toggle": "collapse",
+          "data-bs-target": "#navbarResponsive",
+          "aria-controls": "navbarResponsive",
+          "aria-expanded": "false",
+          "aria-label": "Toggle navigation",
+        },
+        span({ class: "navbar-toggler-icon" })
+      ),
+
+      div(
+        {
+          class: ["collapse navbar-collapse"],
+          id: "navbarResponsive",
+          "data-mdb-collapse-initialized": "true",
+          "data-bs-collapse-initialized": "true",
+        },
+        ul(
+          { class: "navbar-nav ms-auto my-2 my-lg-0" },
+          [...primary]
+            .map((section) => section.items)
+            .flat()
+            .map((item, ix) => {
+              if (item.type === "Separator")
+                return li({ class: "nav-item" }, div({ class: "vr mx-2" }));
+              if (item.subitems && item.subitems.length)
+                return li(
+                  { class: "nav-item dropdown" },
+                  a(
+                    {
+                      class: [
+                        "nav-link dropdown-toggle",
+                        active(currentUrl, item) && "active",
+                      ],
+                      href: "#",
+                      id: `dropdown_primary_${ix}`,
+                      role: "button",
+                      "data-bs-toggle": "dropdown",
+                      "aria-haspopup": "true",
+                      "aria-expanded": "false",
+                      "data-bs-auto-close": "outside",
+                      "data-mdb-dropdown-initialized": "true",
+                      "data-bs-dropdown-initialized": "true",
+                    },
+                    item.icon &&
+                      item.icon !== "empty" &&
+                      item.icon !== "undefined" &&
+                      i({ class: `fa-fw mr-05 ${item.icon}` }),
+                    item.label
+                  ),
+                  div(
+                    {
+                      class: "dropdown-menu",
+                      "aria-labelledby": `dropdown_primary_${ix}`,
+                    },
+                    item.subitems.map((subitem, subIx) =>
+                      renderNestedDropdown(
+                        subitem,
+                        `dropdown_primary_${ix}`,
+                        subIx
+                      )
+                    )
+                  )
+                );
+
+              return li(
+                {
+                  class: [
+                    "nav-item",
+                    active(currentUrl, item) && "active",
+                    item.style && item.style.includes("btn") && "nav-item-btn",
+                  ],
+                },
+                a(
+                  {
+                    class: ["nav-link js-scroll-trigger", item.style || ""],
+                    href: text(item.link || "#"),
+                    ...(item.tooltip
+                      ? {
+                          "data-bs-toggle": "tooltip",
+                          "data-bs-placement": "bottom",
+                          "data-mdb-placement": "bottom",
+                          "data-mdb-original-title": item.tooltip,
+                          "data-bs-original-title": item.tooltip,
+                          "data-mdb-tooltip-initialized": "true",
+                          "data-bs-tooltip-initialized": "true",
+                        }
+                      : {}),
+                  },
+                  item.icon &&
+                    item.icon !== "empty" &&
+                    item.icon !== "undefined" &&
+                    i({ class: `fa-fw mr-05 ${item.icon}` }),
+                  item.label
+                )
+              );
+            })
+            .concat(
+              [...secondary]
+                .map((section) => section.items)
+                .flat()
+                .map((item, ix) => {
+                  if (item.subitems && item.subitems.length)
+                    return li(
+                      { class: "nav-item dropdown" },
+                      a(
+                        {
+                          class: [
+                            "nav-link dropdown-toggle user-nav-section",
+                            active(currentUrl, item) && "active",
+                          ],
+                          href: "#",
+                          id: `dropdown_secondary_${ix}`,
+                          role: "button",
+                          "data-bs-toggle": "dropdown",
+                          "aria-haspopup": "true",
+                          "aria-expanded": "false",
+                          "data-bs-auto-close": "outside",
+                          "data-mdb-dropdown-initialized": "true",
+                          "data-bs-dropdown-initialized": "true",
+                        },
+                        item.icon &&
+                          item.icon !== "empty" &&
+                          item.icon !== "undefined" &&
+                          i({ class: `fa-fw mr-05 ${item.icon}` }),
+                        item.label
+                      ),
+                      div(
+                        {
+                          class: "dropdown-menu dropdown-menu-end",
+                          "aria-labelledby": `dropdown_secondary_${ix}`,
+                        },
+                        item.subitems.map((subitem, subIx) =>
+                          renderNestedDropdown(
+                            subitem,
+                            `dropdown_secondary_${ix}`,
+                            subIx
+                          )
+                        )
+                      )
+                    );
+
+                  return li(
+                    { class: "nav-item" },
+                    a(
+                      {
+                        class: [
+                          "nav-link js-scroll-trigger",
+                          active(currentUrl, item) && "active",
+                        ],
+                        href: text(item.link || "#"),
+                      },
+                      item.icon &&
+                        item.icon !== "empty" &&
+                        item.icon !== "undefined" &&
+                        i({ class: `fa-fw mr-05 ${item.icon}` }),
+                      item.label
+                    )
+                  );
+                })
+            )
+        )
+      )
+    )
+  );
+};
+
 const formModify = (form) => {
   form.formStyle = "vert";
   form.submitButtonClass = "btn-primary btn-user btn-block";

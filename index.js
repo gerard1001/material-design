@@ -69,32 +69,61 @@ const horizontalLineItem = (classes = []) =>
     hr({ class: ["hr my-1"] })
   );
 
-const horizontalSubItem = (currentUrl, config) => (item) =>
-  li(
-    item.link
-      ? a(
-          {
-            class: ["dropdown-item", active(currentUrl, item) && "active"],
-            href: text(item.link),
-            ...(item.tooltip
-              ? {
-                  "data-mdb-placement":
-                    config?.layout_style === "Vertical" ? "right" : "bottom",
-                  "data-bs-toggle": "tooltip",
-                  title: item.tooltip,
-                }
-              : {}),
-          },
-          item.icon && item.icon !== "empty" && item.icon !== "undefined"
-            ? i({
-                class: `me-1 fa-fw ${item.icon} object-fit-contain`,
-                style: "width: 16px; height: 16px;",
-              })
-            : "",
-          item.label
+const verticalUserSubItem = (currentUrl, config) => {
+  const renderNestedDropdown = (item, parentId, subIx) => {
+    if (!item.subitems || !item.subitems.length) {
+      return item.link
+        ? a(
+            {
+              class: ["dropdown-item", active(currentUrl, item) && "active"],
+              href: text(item.link || "#"),
+              ...(item.tooltip
+                ? {
+                    "data-bs-toggle": "tooltip",
+                    "data-bs-placement": "right",
+                    "data-mdb-placement": "right",
+                    "data-mdb-original-title": item.tooltip,
+                    "data-bs-original-title": item.tooltip,
+                    "data-mdb-tooltip-initialized": "true",
+                    "data-bs-tooltip-initialized": "true",
+                  }
+                : {}),
+            },
+            item.icon &&
+              item.icon !== "empty" &&
+              item.icon !== "undefined" &&
+              i({ class: `fa-fw me-1 ${item.icon}` }),
+            item.label
+          )
+        : span({ class: "dropdown-header" }, item.label);
+    }
+    return div(
+      {
+        class: "dropdown-item dropend hover-dropdown-item",
+      },
+      a(
+        {
+          type: "button",
+          class:
+            "dropdown-item dropdown-toggle p-0 d-flex align-items-center justify-content-between",
+          "data-bs-toggle": "dropdown",
+          "aria-expanded": "false",
+          "data-mdb-dropdown-initialized": "true",
+          "data-bs-dropdown-initialized": "true",
+        },
+        item.label
+      ),
+      ul(
+        { class: "dropdown-menu hover-dropdown-menu" },
+        item.subitems.map((subitem, subsubIx) =>
+          li(renderNestedDropdown(subitem, `${parentId}_${subIx}`, subsubIx))
         )
-      : span({ class: "dropdown-header" }, item.label)
-  );
+      )
+    );
+  };
+
+  return (item, ix) => renderNestedDropdown(item, "user_item", ix);
+};
 
 const verticalSubItem =
   (currentUrl, parentPath = "") =>
@@ -225,7 +254,7 @@ const verticalSideBarItem =
     ) {
       return li(
         {
-          class: ["nav-item dropdown", is_active && "active"],
+          class: ["nav-item dropup", is_active && "active"],
         },
         a(
           {
@@ -234,6 +263,7 @@ const verticalSideBarItem =
             "data-bs-toggle": "dropdown",
             role: "button",
             "aria-expanded": "false",
+            "data-bs-auto-close": "outside",
           },
           span({
             class:
@@ -247,13 +277,13 @@ const verticalSideBarItem =
           {
             class: ["dropdown-menu", ix === nitems - 1 && "dropdown-menu-end"],
           },
-          item.subitems.map(horizontalSubItem(currentUrl, config))
+          item.subitems.map(verticalUserSubItem(currentUrl, config))
         )
       );
     } else if (item.isUser && user?.email) {
       return li(
         {
-          class: ["nav-item dropdown", is_active && "active"],
+          class: ["nav-item dropup", is_active && "active"],
         },
         a(
           {
@@ -262,6 +292,7 @@ const verticalSideBarItem =
             "data-bs-toggle": "dropdown",
             role: "button",
             "aria-expanded": "false",
+            "data-bs-auto-close": "outside",
             title: item?.tooltip,
           },
           div(
@@ -277,7 +308,7 @@ const verticalSideBarItem =
           {
             class: ["dropdown-menu", ix === nitems - 1 && "dropdown-menu-end"],
           },
-          item.subitems.map(horizontalSubItem(currentUrl, config))
+          item.subitems.map(verticalUserSubItem(currentUrl, config))
         )
       );
     }
@@ -997,13 +1028,13 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
     </script>
     <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/mdb-jquery-bridge.js"></script>
     <script>
-      // Enable hover for nested dropdowns in horizontal navbar
+      // Enable hover for nested dropdowns in horizontal navbar and vertical sidebar
       (function () {
-        const navbarDropdowns = document.querySelectorAll(
-          ".navbar .hover-dropdown-item"
+        const allDropdowns = document.querySelectorAll(
+          ".navbar .hover-dropdown-item, .sidenav .hover-dropdown-item"
         );
 
-        navbarDropdowns.forEach(function (dropdownItem) {
+        allDropdowns.forEach(function (dropdownItem) {
           let hoverTimer;
           const dropdownMenu = dropdownItem.querySelector(".hover-dropdown-menu");
           const dropdownToggle = dropdownItem.querySelector(
@@ -1411,6 +1442,7 @@ const horizontal_header_sections = (
     {
       class: [
         "navbar d-print-none navbar-expand-md",
+        config?.fixedTop && "fixed-top",
         config?.colorscheme && config.colorscheme.toLowerCase(),
       ],
       id: "mainNav",

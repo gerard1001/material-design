@@ -579,8 +579,13 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
 
   const link_cover_color = adjustColor(primary, { l: -3 });
   const mdb_btn_color = adjustColor(primary, { l: +15 });
+  const isRTL = config?.rtl_mode || false;
+  const langCode = isRTL ? config?.locale_lang_code || "ar" : "en";
+  const cssFile = isRTL ? "mdb.rtl.min.css" : "mdb.min.css";
   return `<!doctype html>
-<html lang="en" data-bs-theme="${config.mode || "light"}">
+<html lang="${langCode}" data-bs-theme="${config.mode || "light"}"${
+    isRTL ? ' dir="rtl"' : ""
+  }>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -590,7 +595,7 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
     <!-- Google Fonts -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap">
     <!-- Material Design Bootstrap -->
-    <link href="/plugins/public/material-design${verstring}/css/mdb.min.css" rel="stylesheet">
+    <link href="/plugins/public/material-design${verstring}/css/${cssFile}" rel="stylesheet">
     <!-- Plugin Custom Styles -->
     <link href="/plugins/public/material-design${verstring}/css/sidenav.css" rel="stylesheet">
     <!-- Material-design plugin overrides (ensure alternating table row colors in dark/light modes) -->
@@ -791,6 +796,59 @@ const wrapIt = (config, bodyAttr, headers, title, body) => {
     }
     .btn-outline-secondary:disabled, .btn-outline-secondary.disabled, fieldset:disabled .btn-outline-secondary {
       border-color: var(--mdb-btn-disabled-color) !important;
+    }
+
+    /* RTL Support */
+    [dir="rtl"] .sidenav {
+      right: 0;
+      left: auto;
+      border-right: none;
+      border-left: 1px solid var(--mdb-border-color);
+    }
+    /* RTL: Body margin adjustment for vertical sidebar */
+    [dir="rtl"] body:has(.sidenav) {
+      margin-left: 0;
+      margin-right: 280px;
+    }
+    /* RTL: Search bar border fix */
+    [dir="rtl"] .search-bar input[type="search"]:not(.hasbl) {
+      border-left: 1px solid #95a5a6;
+      border-right: none;
+    }
+    [dir="rtl"] .search-bar button.search-bar {
+      border-right: 1px solid #95a5a6 !important;
+      border-left: none !important;
+    }
+    [dir="rtl"] .offcanvas-start {
+      right: 0;
+      left: auto;
+      border-right: none;
+      border-left: var(--mdb-offcanvas-border-width) solid var(--mdb-offcanvas-border-color);
+      transform: translateX(100%);
+    }
+    [dir="rtl"] .offcanvas-start.showing, [dir="rtl"] .offcanvas-start.show {
+      transform: none;
+    }
+    /* RTL: Remove margin on mobile */
+    @media screen and (max-width: 992px) {
+      [dir="rtl"] body:has(.sidenav) {
+        margin-right: 0;
+      }
+    }
+    [dir="rtl"] .dropdown-menu {
+      text-align: right;
+    }
+    [dir="rtl"] .form-check {
+      padding-right: 1.5em;
+      padding-left: 0;
+    }
+    [dir="rtl"] .form-check-input {
+      float: right;
+      margin-right: -1.5em;
+      margin-left: 0;
+    }
+    [dir="rtl"] .form-switch .form-check-input {
+      margin-right: -2.5em;
     }
     
     section.page-section.fw-check:has(> .container > .full-page-width:first-child),
@@ -1785,6 +1843,22 @@ const configuration_workflow = (config) =>
                   max: 5,
                   min: 0,
                 },
+              },
+              {
+                name: "rtl_mode",
+                label: "RTL (Right-to-Left) Mode",
+                sublabel:
+                  "Enable for Arabic, Hebrew, Persian and other RTL languages",
+                type: "Bool",
+                required: false,
+              },
+              {
+                name: "locale_lang_code",
+                label: "Locale Language Code",
+                sublabel: "e.g. en, zh, fr, ar etc.",
+                type: "String",
+                required: false,
+                showIf: { rtl_mode: true },
               },
               {
                 name: "primary_color_light",

@@ -816,6 +816,37 @@ const wrapIt = (
     <script>
       window.bootstrap = window.mdb;
       config = ${JSON.stringify(config || {})};
+
+      function mirrorMdbAccordion(root) {
+        var container = root || document;
+
+        container.querySelectorAll('[data-bs-parent]:not([data-mdb-parent])').forEach(function(el) {
+          var parent = el.getAttribute('data-bs-parent');
+          el.setAttribute('data-mdb-parent', parent);
+          if (window.mdb && mdb.Collapse) {
+            var inst = mdb.Collapse.getInstance(el);
+            if (inst) inst.dispose();
+            new mdb.Collapse(el, { parent: parent, toggle: false });
+          }
+        });
+
+        container.querySelectorAll('[data-bs-toggle="collapse"]:not([data-mdb-collapse-init])').forEach(function(el) {
+          el.setAttribute('data-mdb-collapse-init', '');
+          var target = el.getAttribute('data-bs-target') || el.getAttribute('href');
+          if (target && !el.getAttribute('data-mdb-target')) {
+            el.setAttribute('data-mdb-target', target);
+          }
+        });
+      }
+      mirrorMdbAccordion();
+      new MutationObserver(function(mutations) {
+        mutations.forEach(function(m) {
+          m.addedNodes.forEach(function(n) {
+            if (n.nodeType === 1) mirrorMdbAccordion(n);
+          });
+        });
+      }).observe(document.body, { childList: true, subtree: true });
+
       const navbar = document.querySelector(".navbar");
 
       (function () {

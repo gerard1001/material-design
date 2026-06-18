@@ -26,7 +26,6 @@ const {
 } = require("@saltcorn/markup/tags");
 const {
   navbar,
-  navbarSolidOnScroll,
   headersInHead,
   headersInBody,
   alert: _saltcornAlert,
@@ -979,7 +978,6 @@ const wrapIt = (
     </script>
 
     ${headersInBody(headers)}
-    ${config.colorscheme === "navbar-light" ? navbarSolidOnScroll : ""}
   </body>
 </html>`;
 };
@@ -1595,22 +1593,13 @@ const configuration_workflow = (config) =>
                 attributes: {
                   options: [
                     { name: "", label: "Default" },
+                    { name: "sidenav-light bg-light", label: "Light" },
+                    { name: "sidenav-light", label: "Transparent Light" },
                     { name: "sidenav-dark bg-dark", label: "Dark" },
                     { name: "sidenav-dark bg-primary", label: "Dark Primary" },
                     {
                       name: "sidenav-dark bg-secondary",
                       label: "Dark Secondary",
-                    },
-                    { name: "sidenav-light bg-light", label: "Light" },
-                    { name: "sidenav-light bg-white", label: "White" },
-                    { name: "sidenav-light", label: "Transparent Light" },
-                    {
-                      name: "sidenav-light navbar-scrolling bg-light",
-                      label: "Scrolling Light",
-                    },
-                    {
-                      name: "sidenav-dark navbar-scrolled bg-dark",
-                      label: "Scrolled Dark",
                     },
                   ],
                 },
@@ -1624,22 +1613,16 @@ const configuration_workflow = (config) =>
                 default: "",
                 attributes: {
                   options: [
-                    { name: "", label: "Default" },
+                    { name: "navbar-light bg-light", label: "Light" },
+                    { name: "navbar-light bg-white", label: "White" },
                     { name: "navbar-dark bg-dark", label: "Dark" },
                     { name: "navbar-dark bg-primary", label: "Dark Primary" },
                     {
                       name: "navbar-dark bg-secondary",
                       label: "Dark Secondary",
                     },
-                    { name: "navbar-light bg-light", label: "Light" },
-                    { name: "navbar-light bg-white", label: "White" },
                     { name: "", label: "Transparent Light" },
                     { name: "transparent-dark", label: "Transparent Dark" },
-                    {
-                      name: "navbar-scrolling bg-light",
-                      label: "Scrolling Light",
-                    },
-                    { name: "navbar-scrolled bg-dark", label: "Scrolled Dark" },
                   ],
                 },
                 showIf: { layout_style: "Horizontal" },

@@ -29,9 +29,13 @@ const {
   navbarSolidOnScroll,
   headersInHead,
   headersInBody,
-  alert,
+  alert: _saltcornAlert,
   activeChecker,
 } = require("@saltcorn/markup/layout_utils");
+const alert = (type, msg) => {
+  const html = _saltcornAlert(type, msg);
+  return html ? html.replace('class="alert ', 'data-bs-alert-init class="alert ') : html;
+};
 const renderLayout = require("@saltcorn/markup/layout");
 const Form = require("@saltcorn/data/models/form");
 const Workflow = require("@saltcorn/data/models/workflow");
@@ -79,13 +83,9 @@ const verticalUserSubItem = (currentUrl, config) => {
               href: text(item.link || "#"),
               ...(item.tooltip
                 ? {
-                    "data-bs-toggle": "tooltip",
+                    "data-bs-tooltip-init": "",
                     "data-bs-placement": "right",
-                    "data-mdb-placement": "right",
-                    "data-mdb-original-title": item.tooltip,
-                    "data-bs-original-title": item.tooltip,
-                    "data-mdb-tooltip-initialized": "true",
-                    "data-bs-tooltip-initialized": "true",
+                    title: item.tooltip,
                   }
                 : {}),
             },
@@ -108,8 +108,6 @@ const verticalUserSubItem = (currentUrl, config) => {
             "dropdown-item dropdown-toggle p-0 d-flex align-items-center justify-content-between",
           "data-bs-toggle": "dropdown",
           "aria-expanded": "false",
-          "data-mdb-dropdown-initialized": "true",
-          "data-bs-dropdown-initialized": "true",
         },
         item.label,
       ),
@@ -142,8 +140,8 @@ const verticalSubItem =
               href: text(item.link),
               ...(item.tooltip
                 ? {
-                    "data-mdb-placement": "right",
-                    "data-bs-toggle": "tooltip",
+                    "data-bs-tooltip-init": "",
+                    "data-bs-placement": "right",
                     title: item.tooltip,
                   }
                 : {}),
@@ -179,7 +177,7 @@ const verticalSubItem =
                 ],
                 href: "#collapse_" + itemId,
                 role: "button",
-                "data-bs-toggle": "collapse",
+                "data-bs-collapse-init": "",
                 "aria-expanded": is_active ? "true" : "false",
                 "aria-controls": "collapse_" + itemId,
               },
@@ -206,8 +204,6 @@ const verticalSubItem =
               {
                 class: ["collapse", is_active && "show"],
                 id: "collapse_" + itemId,
-                "data-mdb-collapse-initialized": "true",
-                "data-bs-collapse-initialized": "true",
               },
               ul(
                 {
@@ -226,8 +222,8 @@ const verticalSubItem =
                   active(currentUrl, item) && "active",
                 ],
                 href: text(item.link),
-                "data-mdb-placement": "right",
-                "data-bs-toggle": "tooltip",
+                "data-bs-tooltip-init": "",
+                "data-bs-placement": "right",
                 title: item.tooltip,
               },
               item.icon && item.icon !== "empty" && item.icon !== "undefined"
@@ -356,7 +352,7 @@ const verticalSideBarItem =
                       ],
                       href: "#collapse_item_" + ix,
                       role: "button",
-                      "data-bs-toggle": "collapse",
+                      "data-bs-collapse-init": "",
                       "aria-expanded": is_active ? "true" : "false",
                       "aria-controls": "collapse_item_" + ix,
                       title: item?.tooltip,
@@ -408,8 +404,8 @@ const verticalSideBarItem =
                     ...(is_active && { "aria-current": "page" }),
                     ...(item.tooltip
                       ? {
-                          "data-mdb-placement": "right",
-                          "data-bs-toggle": "tooltip",
+                          "data-bs-tooltip-init": "",
+                          "data-bs-placement": "right",
                           title: item.tooltip,
                         }
                       : {}),
@@ -811,41 +807,11 @@ const wrapIt = (
     <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/popper.min.js"></script>
     <!-- MDB core JavaScript -->
     <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/mdb.min.js"></script>
-    <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/reinit-dropdowns.js"></script>
+    <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/reinit-mdb.js"></script>
     <!-- Bind window.mdb to window.bootstrap for backward compatibility -->
     <script>
       window.bootstrap = window.mdb;
       config = ${JSON.stringify(config || {})};
-
-      function mirrorMdbAccordion(root) {
-        var container = root || document;
-
-        container.querySelectorAll('[data-bs-parent]:not([data-mdb-parent])').forEach(function(el) {
-          var parent = el.getAttribute('data-bs-parent');
-          el.setAttribute('data-mdb-parent', parent);
-          if (window.mdb && mdb.Collapse) {
-            var inst = mdb.Collapse.getInstance(el);
-            if (inst) inst.dispose();
-            new mdb.Collapse(el, { parent: parent, toggle: false });
-          }
-        });
-
-        container.querySelectorAll('[data-bs-toggle="collapse"]:not([data-mdb-collapse-init])').forEach(function(el) {
-          el.setAttribute('data-mdb-collapse-init', '');
-          var target = el.getAttribute('data-bs-target') || el.getAttribute('href');
-          if (target && !el.getAttribute('data-mdb-target')) {
-            el.setAttribute('data-mdb-target', target);
-          }
-        });
-      }
-      mirrorMdbAccordion();
-      new MutationObserver(function(mutations) {
-        mutations.forEach(function(m) {
-          m.addedNodes.forEach(function(n) {
-            if (n.nodeType === 1) mirrorMdbAccordion(n);
-          });
-        });
-      }).observe(document.body, { childList: true, subtree: true });
 
       const navbar = document.querySelector(".navbar");
 
@@ -1340,13 +1306,9 @@ const horizontal_header_sections = (
           href: text(item.link || "#"),
           ...(item.tooltip
             ? {
-                "data-bs-toggle": "tooltip",
+                "data-bs-tooltip-init": "",
                 "data-bs-placement": "left",
-                "data-mdb-placement": "left",
-                "data-mdb-original-title": item.tooltip,
-                "data-bs-original-title": item.tooltip,
-                "data-mdb-tooltip-initialized": "true",
-                "data-bs-tooltip-initialized": "true",
+                title: item.tooltip,
               }
             : {}),
         },
@@ -1367,8 +1329,6 @@ const horizontal_header_sections = (
           class: "dropdown-item dropdown-toggle p-0",
           "data-bs-toggle": "dropdown",
           "aria-expanded": "false",
-          "data-mdb-dropdown-initialized": "true",
-          "data-bs-dropdown-initialized": "true",
         },
         item.label,
       ),
@@ -1419,7 +1379,7 @@ const horizontal_header_sections = (
         {
           class: "navbar-toggler navbar-toggler-right collapsed",
           type: "button",
-          "data-bs-toggle": "collapse",
+          "data-bs-collapse-init": "",
           "data-bs-target": "#navbarResponsive",
           "aria-controls": "navbarResponsive",
           "aria-expanded": "false",
@@ -1432,8 +1392,6 @@ const horizontal_header_sections = (
         {
           class: ["collapse navbar-collapse"],
           id: "navbarResponsive",
-          "data-mdb-collapse-initialized": "true",
-          "data-bs-collapse-initialized": "true",
         },
         ul(
           { class: "navbar-nav ms-auto my-2 my-lg-0" },
@@ -1459,8 +1417,7 @@ const horizontal_header_sections = (
                       "aria-haspopup": "true",
                       "aria-expanded": "false",
                       "data-bs-auto-close": "outside",
-                      "data-mdb-dropdown-initialized": "true",
-                      "data-bs-dropdown-initialized": "true",
+                      // "data-mdb-dropdown-init": "true",
                     },
                     item.icon &&
                       item.icon !== "empty" &&
@@ -1503,13 +1460,9 @@ const horizontal_header_sections = (
                     href: text(item.link || "#"),
                     ...(item.tooltip
                       ? {
-                          "data-bs-toggle": "tooltip",
+                          "data-bs-tooltip-init": "",
                           "data-bs-placement": "bottom",
-                          "data-mdb-placement": "bottom",
-                          "data-mdb-original-title": item.tooltip,
-                          "data-bs-original-title": item.tooltip,
-                          "data-mdb-tooltip-initialized": "true",
-                          "data-bs-tooltip-initialized": "true",
+                          title: item.tooltip,
                         }
                       : {}),
                   },
@@ -1541,9 +1494,7 @@ const horizontal_header_sections = (
                           "data-bs-toggle": "dropdown",
                           "aria-haspopup": "true",
                           "aria-expanded": "false",
-                          "data-bs-auto-close": "outside",
-                          "data-mdb-dropdown-initialized": "true",
-                          "data-bs-dropdown-initialized": "true",
+                          "data-bs-auto-close": "outside"
                         },
                         item.icon &&
                           item.icon !== "empty" &&

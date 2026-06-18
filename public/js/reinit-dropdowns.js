@@ -3,9 +3,9 @@
     try {
       root = root || document;
       var toggleSelector =
-        '[data-bs-toggle="dropdown"],[data-mdb-dropdown-init],[data-mdb-toggle="dropdown"]';
+        '[data-bs-toggle="dropdown"],[data-bs-dropdown-init]';
       var nodes = Array.prototype.slice.call(
-        root.querySelectorAll ? root.querySelectorAll(toggleSelector) : []
+        root.querySelectorAll ? root.querySelectorAll(toggleSelector) : [],
       );
       if (!nodes.length) return;
       var DropdownClass =
@@ -33,7 +33,6 @@
           ) {
             window.jQuery(el).dropdown();
           }
-          el.setAttribute("data-mdb-dropdown-initialized", "true");
           el.setAttribute("data-bs-dropdown-initialized", "true");
         } catch (e) {
           console.error(e);

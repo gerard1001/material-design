@@ -135,6 +135,9 @@ html[data-bs-theme="dark"] .table> tbody > tr:nth-of-type(odd) > * {
  .dropdown-menu.dropdown-menu-end {
       max-width: fit-content;
     }
+ .dropdown-menu.show {
+      max-width: fit-content;
+    }
     /* Search component in "Page Configuration" */
     [data-bs-theme="dark"] input.form-control.bg-light {
       background-color: var(--bs-dark) !important;

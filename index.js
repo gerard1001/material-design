@@ -26,12 +26,15 @@ const {
 } = require("@saltcorn/markup/tags");
 const {
   navbar,
-  navbarSolidOnScroll,
   headersInHead,
   headersInBody,
-  alert,
+  alert: _saltcornAlert,
   activeChecker,
 } = require("@saltcorn/markup/layout_utils");
+const alert = (type, msg) => {
+  const html = _saltcornAlert(type, msg);
+  return html ? html.replace('class="alert ', 'data-bs-alert-init class="alert ') : html;
+};
 const renderLayout = require("@saltcorn/markup/layout");
 const Form = require("@saltcorn/data/models/form");
 const Workflow = require("@saltcorn/data/models/workflow");
@@ -79,13 +82,9 @@ const verticalUserSubItem = (currentUrl, config) => {
               href: text(item.link || "#"),
               ...(item.tooltip
                 ? {
-                    "data-bs-toggle": "tooltip",
+                    "data-bs-tooltip-init": "",
                     "data-bs-placement": "right",
-                    "data-mdb-placement": "right",
-                    "data-mdb-original-title": item.tooltip,
-                    "data-bs-original-title": item.tooltip,
-                    "data-mdb-tooltip-initialized": "true",
-                    "data-bs-tooltip-initialized": "true",
+                    title: item.tooltip,
                   }
                 : {}),
             },
@@ -108,8 +107,6 @@ const verticalUserSubItem = (currentUrl, config) => {
             "dropdown-item dropdown-toggle p-0 d-flex align-items-center justify-content-between",
           "data-bs-toggle": "dropdown",
           "aria-expanded": "false",
-          "data-mdb-dropdown-initialized": "true",
-          "data-bs-dropdown-initialized": "true",
         },
         item.label,
       ),
@@ -142,8 +139,8 @@ const verticalSubItem =
               href: text(item.link),
               ...(item.tooltip
                 ? {
-                    "data-mdb-placement": "right",
-                    "data-bs-toggle": "tooltip",
+                    "data-bs-tooltip-init": "",
+                    "data-bs-placement": "right",
                     title: item.tooltip,
                   }
                 : {}),
@@ -179,7 +176,7 @@ const verticalSubItem =
                 ],
                 href: "#collapse_" + itemId,
                 role: "button",
-                "data-bs-toggle": "collapse",
+                "data-bs-collapse-init": "",
                 "aria-expanded": is_active ? "true" : "false",
                 "aria-controls": "collapse_" + itemId,
               },
@@ -206,8 +203,6 @@ const verticalSubItem =
               {
                 class: ["collapse", is_active && "show"],
                 id: "collapse_" + itemId,
-                "data-mdb-collapse-initialized": "true",
-                "data-bs-collapse-initialized": "true",
               },
               ul(
                 {
@@ -226,8 +221,8 @@ const verticalSubItem =
                   active(currentUrl, item) && "active",
                 ],
                 href: text(item.link),
-                "data-mdb-placement": "right",
-                "data-bs-toggle": "tooltip",
+                "data-bs-tooltip-init": "",
+                "data-bs-placement": "right",
                 title: item.tooltip,
               },
               item.icon && item.icon !== "empty" && item.icon !== "undefined"
@@ -356,7 +351,7 @@ const verticalSideBarItem =
                       ],
                       href: "#collapse_item_" + ix,
                       role: "button",
-                      "data-bs-toggle": "collapse",
+                      "data-bs-collapse-init": "",
                       "aria-expanded": is_active ? "true" : "false",
                       "aria-controls": "collapse_item_" + ix,
                       title: item?.tooltip,
@@ -408,8 +403,8 @@ const verticalSideBarItem =
                     ...(is_active && { "aria-current": "page" }),
                     ...(item.tooltip
                       ? {
-                          "data-mdb-placement": "right",
-                          "data-bs-toggle": "tooltip",
+                          "data-bs-tooltip-init": "",
+                          "data-bs-placement": "right",
                           title: item.tooltip,
                         }
                       : {}),
@@ -811,11 +806,12 @@ const wrapIt = (
     <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/popper.min.js"></script>
     <!-- MDB core JavaScript -->
     <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/mdb.min.js"></script>
-    <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/reinit-dropdowns.js"></script>
+    <script type="text/javascript" src="/plugins/public/material-design${verstring}/js/reinit-mdb.js"></script>
     <!-- Bind window.mdb to window.bootstrap for backward compatibility -->
     <script>
       window.bootstrap = window.mdb;
       config = ${JSON.stringify(config || {})};
+
       const navbar = document.querySelector(".navbar");
 
       (function () {
@@ -982,7 +978,6 @@ const wrapIt = (
     </script>
 
     ${headersInBody(headers)}
-    ${config.colorscheme === "navbar-light" ? navbarSolidOnScroll : ""}
   </body>
 </html>`;
 };
@@ -1309,13 +1304,9 @@ const horizontal_header_sections = (
           href: text(item.link || "#"),
           ...(item.tooltip
             ? {
-                "data-bs-toggle": "tooltip",
+                "data-bs-tooltip-init": "",
                 "data-bs-placement": "left",
-                "data-mdb-placement": "left",
-                "data-mdb-original-title": item.tooltip,
-                "data-bs-original-title": item.tooltip,
-                "data-mdb-tooltip-initialized": "true",
-                "data-bs-tooltip-initialized": "true",
+                title: item.tooltip,
               }
             : {}),
         },
@@ -1336,8 +1327,6 @@ const horizontal_header_sections = (
           class: "dropdown-item dropdown-toggle p-0",
           "data-bs-toggle": "dropdown",
           "aria-expanded": "false",
-          "data-mdb-dropdown-initialized": "true",
-          "data-bs-dropdown-initialized": "true",
         },
         item.label,
       ),
@@ -1388,7 +1377,7 @@ const horizontal_header_sections = (
         {
           class: "navbar-toggler navbar-toggler-right collapsed",
           type: "button",
-          "data-bs-toggle": "collapse",
+          "data-bs-collapse-init": "",
           "data-bs-target": "#navbarResponsive",
           "aria-controls": "navbarResponsive",
           "aria-expanded": "false",
@@ -1401,8 +1390,6 @@ const horizontal_header_sections = (
         {
           class: ["collapse navbar-collapse"],
           id: "navbarResponsive",
-          "data-mdb-collapse-initialized": "true",
-          "data-bs-collapse-initialized": "true",
         },
         ul(
           { class: "navbar-nav ms-auto my-2 my-lg-0" },
@@ -1428,8 +1415,7 @@ const horizontal_header_sections = (
                       "aria-haspopup": "true",
                       "aria-expanded": "false",
                       "data-bs-auto-close": "outside",
-                      "data-mdb-dropdown-initialized": "true",
-                      "data-bs-dropdown-initialized": "true",
+                      // "data-mdb-dropdown-init": "true",
                     },
                     item.icon &&
                       item.icon !== "empty" &&
@@ -1472,13 +1458,9 @@ const horizontal_header_sections = (
                     href: text(item.link || "#"),
                     ...(item.tooltip
                       ? {
-                          "data-bs-toggle": "tooltip",
+                          "data-bs-tooltip-init": "",
                           "data-bs-placement": "bottom",
-                          "data-mdb-placement": "bottom",
-                          "data-mdb-original-title": item.tooltip,
-                          "data-bs-original-title": item.tooltip,
-                          "data-mdb-tooltip-initialized": "true",
-                          "data-bs-tooltip-initialized": "true",
+                          title: item.tooltip,
                         }
                       : {}),
                   },
@@ -1510,9 +1492,7 @@ const horizontal_header_sections = (
                           "data-bs-toggle": "dropdown",
                           "aria-haspopup": "true",
                           "aria-expanded": "false",
-                          "data-bs-auto-close": "outside",
-                          "data-mdb-dropdown-initialized": "true",
-                          "data-bs-dropdown-initialized": "true",
+                          "data-bs-auto-close": "outside"
                         },
                         item.icon &&
                           item.icon !== "empty" &&
@@ -1613,22 +1593,13 @@ const configuration_workflow = (config) =>
                 attributes: {
                   options: [
                     { name: "", label: "Default" },
+                    { name: "sidenav-light bg-light", label: "Light" },
+                    { name: "sidenav-light", label: "Transparent Light" },
                     { name: "sidenav-dark bg-dark", label: "Dark" },
                     { name: "sidenav-dark bg-primary", label: "Dark Primary" },
                     {
                       name: "sidenav-dark bg-secondary",
                       label: "Dark Secondary",
-                    },
-                    { name: "sidenav-light bg-light", label: "Light" },
-                    { name: "sidenav-light bg-white", label: "White" },
-                    { name: "sidenav-light", label: "Transparent Light" },
-                    {
-                      name: "sidenav-light navbar-scrolling bg-light",
-                      label: "Scrolling Light",
-                    },
-                    {
-                      name: "sidenav-dark navbar-scrolled bg-dark",
-                      label: "Scrolled Dark",
                     },
                   ],
                 },
@@ -1642,22 +1613,16 @@ const configuration_workflow = (config) =>
                 default: "",
                 attributes: {
                   options: [
-                    { name: "", label: "Default" },
+                    { name: "navbar-light bg-light", label: "Light" },
+                    { name: "navbar-light bg-white", label: "White" },
                     { name: "navbar-dark bg-dark", label: "Dark" },
                     { name: "navbar-dark bg-primary", label: "Dark Primary" },
                     {
                       name: "navbar-dark bg-secondary",
                       label: "Dark Secondary",
                     },
-                    { name: "navbar-light bg-light", label: "Light" },
-                    { name: "navbar-light bg-white", label: "White" },
                     { name: "", label: "Transparent Light" },
                     { name: "transparent-dark", label: "Transparent Dark" },
-                    {
-                      name: "navbar-scrolling bg-light",
-                      label: "Scrolling Light",
-                    },
-                    { name: "navbar-scrolled bg-dark", label: "Scrolled Dark" },
                   ],
                 },
                 showIf: { layout_style: "Horizontal" },
